@@ -1028,6 +1028,13 @@ function render() {
     `<div class="move-entry"><span class="move-num">${e.n}.</span><span class="move-w">${e.w||''}</span><span class="move-b">${e.b||''}</span></div>`
   ).join('');
   logEl.scrollTop = logEl.scrollHeight;
+
+  // Force field canvas lines
+  if (showFF) drawFFCanvas();
+  else clearFFCanvas();
+
+  // Sync VR if open
+  if (vrOpen) vrSyncBoard();
 }
 
 // ─── Cell click ──────────────────────────────────────────────────────────────
