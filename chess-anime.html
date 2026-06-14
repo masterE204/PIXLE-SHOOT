@@ -985,14 +985,14 @@ function render() {
       if (board[r][c]&&board[r][c].t==='k'&&board[r][c].c===turn&&inCheck(board,turn))
         cell.classList.add('in-check');
 
-      // Piece
+      // Piece — 3D card
       if (board[r][c]) {
         const p = board[r][c];
-        const span = document.createElement('span');
-        span.className = 'piece ' + (p.c==='w'?'white-piece':'black-piece');
-        span.textContent = p.c==='w' ? WHITE_PIECES[p.t] : BLACK_PIECES[p.t];
-        cell.appendChild(span);
+        cell.appendChild(makePieceCard(p, r, c));
       }
+
+      // Force field overlays
+      if (showFF) applyFFOverlay(cell, r, c);
 
       cell.addEventListener('click', () => onCellClick(r, c));
       boardEl.appendChild(cell);
