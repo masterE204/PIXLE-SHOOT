@@ -306,77 +306,85 @@ const rng = (a,b) => a+(b-a)*Math.random();
 
 // Map themes: one per wave (cycles after last)
 const MAP_THEMES = [
-  // Wave 1 – Tatooine
+  // Wave 1 – Death Star Command Deck
   {
-    name:'Tatooine',
-    bg:0xc8a060, fog:0xc8a060, fogNear:60, fogFar:160,
-    floor:0xb89050, grid:0xddbb77,
-    wall:0xc0a060, pillar:0xb89848,
-    ambient:0xffe8b0, sun:0xfff0cc,
-    obstacles:'rocks', pillarCount:18,
+    name:'Death Star — Command Deck',
+    bg:0x1a1a22, fog:0x1a1a22, fogNear:40, fogFar:110,
+    floor:0x222228, grid:0x44445a,
+    wall:0x303040, pillar:0x404050,
+    ambient:0x6666aa, sun:0x8888cc,
+    obstacles:'consoles', pillarCount:20,
+    accentColor:0xff2200, accentName:'red',
   },
-  // Wave 2 – Death Star
+  // Wave 2 – Star Destroyer Bridge
   {
-    name:'Death Star',
-    bg:0x303038, fog:0x303038, fogNear:40, fogFar:120,
-    floor:0x282830, grid:0x505060,
-    wall:0x404050, pillar:0x484858,
-    ambient:0x8888aa, sun:0xaaaacc,
-    obstacles:'pillars', pillarCount:22,
+    name:'Star Destroyer — Bridge',
+    bg:0x101018, fog:0x101018, fogNear:45, fogFar:120,
+    floor:0x181820, grid:0x303048,
+    wall:0x282838, pillar:0x383848,
+    ambient:0x5555aa, sun:0x7777cc,
+    obstacles:'consoles', pillarCount:22,
+    accentColor:0x00aaff, accentName:'blue',
   },
-  // Wave 3 – Hoth
+  // Wave 3 – Imperial Hangar Bay
   {
-    name:'Hoth',
-    bg:0xc0d8f0, fog:0xc0d8f0, fogNear:55, fogFar:140,
-    floor:0xd0e8ff, grid:0xaaccee,
-    wall:0xb8d0e8, pillar:0xc0d8f0,
-    ambient:0xddeeff, sun:0xeef8ff,
-    obstacles:'pillars', pillarCount:20,
+    name:'Imperial Hangar Bay',
+    bg:0x0e0e14, fog:0x0e0e14, fogNear:50, fogFar:130,
+    floor:0x181820, grid:0x222230,
+    wall:0x202028, pillar:0x2a2a36,
+    ambient:0x4466aa, sun:0x6688cc,
+    obstacles:'crates', pillarCount:26,
+    accentColor:0xffcc00, accentName:'yellow',
   },
-  // Wave 4 – Endor
+  // Wave 4 – Rebel Cruiser Engine Room
   {
-    name:'Endor',
-    bg:0x2a4a20, fog:0x2a4a20, fogNear:45, fogFar:120,
-    floor:0x305828, grid:0x4a7a30,
-    wall:0x3a6028, pillar:0x406830,
-    ambient:0x88cc66, sun:0xaade88,
-    obstacles:'trees', pillarCount:24,
+    name:'Rebel Cruiser — Engine Room',
+    bg:0x0a1820, fog:0x0a1820, fogNear:40, fogFar:100,
+    floor:0x102030, grid:0x1a3858,
+    wall:0x183040, pillar:0x203848,
+    ambient:0x3388aa, sun:0x55aacc,
+    obstacles:'pipes', pillarCount:24,
+    accentColor:0x00ff88, accentName:'green',
   },
-  // Wave 5 – Coruscant
+  // Wave 5 – Death Star Reactor Core
   {
-    name:'Coruscant',
-    bg:0x102040, fog:0x102040, fogNear:50, fogFar:130,
-    floor:0x182848, grid:0x2244aa,
-    wall:0x203058, pillar:0x283868,
-    ambient:0x4466cc, sun:0x6688ff,
-    obstacles:'pillars', pillarCount:20,
+    name:'Death Star — Reactor Core',
+    bg:0x200820, fog:0x200820, fogNear:35, fogFar:100,
+    floor:0x280a28, grid:0x500a50,
+    wall:0x300c30, pillar:0x401040,
+    ambient:0xaa44aa, sun:0xcc66cc,
+    obstacles:'consoles', pillarCount:18,
+    accentColor:0xff00ff, accentName:'magenta',
   },
-  // Wave 6 – Mustafar
+  // Wave 6 – Star Destroyer Detention Block
   {
-    name:'Mustafar',
-    bg:0x902010, fog:0x902010, fogNear:50, fogFar:130,
-    floor:0xa02818, grid:0xdd5522,
-    wall:0xb03020, pillar:0xaa2818,
-    ambient:0xff7744, sun:0xffaa66,
-    obstacles:'rocks', pillarCount:16,
+    name:'Star Destroyer — Detention Block',
+    bg:0x0c1010, fog:0x0c1010, fogNear:40, fogFar:110,
+    floor:0x101818, grid:0x1a2a2a,
+    wall:0x181e1e, pillar:0x202828,
+    ambient:0x336655, sun:0x448866,
+    obstacles:'crates', pillarCount:20,
+    accentColor:0x00ffcc, accentName:'teal',
   },
-  // Wave 7 – Dagobah
+  // Wave 7 – Space Station Docking Port
   {
-    name:'Dagobah',
-    bg:0x204828, fog:0x204828, fogNear:40, fogFar:110,
-    floor:0x285830, grid:0x406840,
-    wall:0x305838, pillar:0x386040,
-    ambient:0x66aa55, sun:0x88cc77,
-    obstacles:'trees', pillarCount:26,
+    name:'Space Station — Docking Port',
+    bg:0x080812, fog:0x080812, fogNear:45, fogFar:115,
+    floor:0x10101a, grid:0x202030,
+    wall:0x181828, pillar:0x20202e,
+    ambient:0x4444aa, sun:0x6666cc,
+    obstacles:'pipes', pillarCount:22,
+    accentColor:0xff8800, accentName:'orange',
   },
-  // Wave 8 – Naboo
+  // Wave 8 – Super Star Destroyer Combat Deck
   {
-    name:'Naboo',
-    bg:0x4878a0, fog:0x4878a0, fogNear:55, fogFar:145,
-    floor:0x508898, grid:0x60aacc,
-    wall:0x5890a8, pillar:0x6098b0,
-    ambient:0x88ccee, sun:0xaaddff,
-    obstacles:'pillars', pillarCount:18,
+    name:'Super Star Destroyer — Combat Deck',
+    bg:0x050508, fog:0x050508, fogNear:35, fogFar:95,
+    floor:0x0a0a10, grid:0x181828,
+    wall:0x111120, pillar:0x181828,
+    ambient:0x3333aa, sun:0x5555cc,
+    obstacles:'consoles', pillarCount:28,
+    accentColor:0xff0000, accentName:'red',
   },
 ];
 
