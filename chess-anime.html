@@ -847,6 +847,8 @@ function render() {
   if (check) {
     statusEl.textContent = (turn==='w'?'🧝 Light':'🥷 Shadow') + ' is in CHECK! 🔥';
     statusEl.classList.add('check');
+    setTimeout(soundCheck, 50);
+    screenFlash('#ff000033');
   } else {
     statusEl.textContent = (turn==='w'?'🧝 Light (White)':'🥷 Shadow (Black)') + '\'s turn';
   }
