@@ -1858,14 +1858,14 @@ function updateRadar() {
 
 function refreshWeaponBar() {
   const bar = document.getElementById('weapon-bar');
-  const wkeys = ['pistol','shotgun','uzi','launcher','laser'];
+  const wkeys = ['pistol','shotgun','uzi','launcher','laser','lightsaber','vibroblade','electrostaff'];
   bar.innerHTML='';
   for (const w of wkeys) {
     if (!inventory[w]) continue;
     const slot = document.createElement('div');
-    slot.className='wslot'+(w===currentWeapon?' active':'');
     const def = WEAPONS_DEF[w];
-    const ammoStr = inventory[w].ammo===Infinity?'∞':inventory[w].ammo;
+    slot.className='wslot'+(w===currentWeapon?' active':'')+(def.melee?' melee':'');
+    const ammoStr = def.melee ? '⚔️' : (inventory[w].ammo===Infinity?'∞':inventory[w].ammo);
     slot.innerHTML=`<div class="wname">${def.label}</div><div class="wammo">${ammoStr}</div>`;
     bar.appendChild(slot);
   }
