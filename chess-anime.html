@@ -672,15 +672,19 @@
 
   <!-- Board -->
   <div>
-    <div class="board-container">
-      <div class="board-wrapper">
+    <div class="board-container" id="board-container">
+      <div class="board-wrapper" id="board-wrapper">
         <div id="board"></div>
+        <canvas id="ff-canvas"></canvas>
       </div>
     </div>
     <div id="status-bar">✨ White moves first — your destiny awaits!</div>
-    <div class="btn-row">
+    <div class="btn-row" style="flex-wrap:wrap">
       <button class="btn btn-primary" onclick="newGame()">⚡ New Game</button>
       <button class="btn btn-secondary" onclick="undoMove()">↩ Undo</button>
+      <button class="btn btn-secondary" id="ff-btn" onclick="toggleForceFields()">🛡️ Force Fields</button>
+      <button class="btn btn-secondary" id="d3-btn" onclick="toggle3D()">🎮 3D Mode</button>
+      <button class="btn btn-secondary" id="vr-btn" onclick="openVR()">🥽 VR Mode</button>
     </div>
   </div>
 
