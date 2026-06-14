@@ -478,170 +478,276 @@ function buildMap(waveNum) {
     }
   }
 
-  // Obstacle set
-  const pm = new THREE.MeshStandardMaterial({ color: theme.pillar });
-  const count = theme.pillarCount;
+  // ── Per-level structural layout ──────────────────────────────────────────
+  const acc = theme.accentColor || 0x00aaff;
+  const M  = c => new THREE.MeshStandardMaterial({color:c, roughness:0.4, metalness:0.6});
+  const ME = (c,ei=0.8) => new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:ei,roughness:0.15,metalness:0.8});
+  function box(x,y,z,sx,sy,sz,mat){ const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),mat); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; scene.add(m); mapObjects.push(m); return m; }
+  function cyl(x,y,z,r,h,seg,mat){ const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg),mat); m.position.set(x,y,z); m.castShadow=true; scene.add(m); mapObjects.push(m); return m; }
+  function pl(x,y,z,col,int,dist){ const l=new THREE.PointLight(col,int,dist); l.position.set(x,y,z); scene.add(l); mapObjects.push(l); }
+  function console_(x,z,ry,colAcc){
+    const g=new THREE.Group();
+    g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(1.8,0.9,0.9), M(theme.pillar)), {position:{x:0,y:0.45,z:0}}));
+    const scr=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.7,0.06), ME(colAcc,0.6));
+    scr.position.set(0,1.15,0); scr.rotation.x=-0.2; g.add(scr);
+    const lc=[0xff2200,0x00ff44,0xffcc00,0x00aaff];
+    lc.forEach((c,i)=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.05),ME(c,1.5)); b.position.set(-0.2+i*0.14,0.9,0.46); g.add(b); });
+    g.position.set(x,0,z); g.rotation.y=ry;
+    scene.add(g); mapObjects.push(g);
+    pl(x,1.6,z, colAcc, 0.9, 5);
+  }
+  function crate_(x,z,stacks,colAcc){
+    const g=new THREE.Group(); let y=0;
+    for(let s=0;s<stacks;s++){
+      const w=rng(0.9,1.5),d=rng(0.9,1.4),h=rng(0.7,1.0);
+      const cr=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), M(theme.pillar));
+      cr.position.set(rng(-0.15,0.15), y+h/2, rng(-0.15,0.15)); g.add(cr);
+      const band=new THREE.Mesh(new THREE.BoxGeometry(w+0.02,0.07,d+0.02), ME(colAcc,0.5));
+      band.position.set(0, y+h/2, 0); g.add(band);
+      y+=h;
+    }
+    g.position.set(x,0,z); g.rotation.y=rng(0,Math.PI*2); scene.add(g); mapObjects.push(g);
+  }
+  function pipe_(x,z, h, colAcc){
+    const g=new THREE.Group();
+    const pm2=M(theme.pillar); pm2.metalness=0.75; pm2.roughness=0.3;
+    g.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,h,8),pm2),{position:{x:0,y:h/2,z:0}}));
+    [0.3,0.55,0.8].forEach(t=>{ const f=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.14,8),ME(colAcc,0.5)); f.position.y=h*t; g.add(f); });
+    const cross=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,rng(1.5,3),6),pm2);
+    cross.rotation.z=Math.PI/2; cross.position.y=h*0.6; g.add(cross);
+    g.position.set(x,0,z); g.rotation.y=rng(0,Math.PI*2); scene.add(g); mapObjects.push(g);
+    pl(x,h*0.6,z, colAcc, 0.8, 4);
+  }
 
-  for (let i=0;i<count;i++) {
-    let px=rng(-ARENA+3,ARENA-3), pz=rng(-ARENA+3,ARENA-3);
-    if (Math.abs(px)<5&&Math.abs(pz)<5) continue;
-    let mesh;
+  const lvl = (waveNum-1) % MAP_THEMES.length;
 
-    if (theme.obstacles==='pillars') {
-      const h=rng(2,4);
-      mesh=new THREE.Mesh(new THREE.BoxGeometry(rng(1,2.5),h,rng(1,2.5)),pm.clone());
-      mesh.position.set(px,h/2,pz);
+  if (lvl===0) {
+    // ── Death Star Command Deck ──────────────────────────────
+    // Central command pit — raised ring around center
+    const ringMat = M(theme.pillar);
+    for(let i=0;i<12;i++){
+      const a=(i/12)*Math.PI*2, r=6;
+      box(Math.cos(a)*r, 0.5, Math.sin(a)*r, 1.2,1.0,1.2, ringMat);
+    }
+    // Raised command platform
+    box(0,0.18,0, 4,0.35,4, M(theme.wall));
+    // Holographic display column (center)
+    cyl(0,1.0,0, 0.4,2.0,10, M(theme.pillar));
+    const hologram=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,1.8,12),
+      new THREE.MeshStandardMaterial({color:acc,emissive:acc,emissiveIntensity:1.5,transparent:true,opacity:0.4}));
+    hologram.position.set(0,2.2,0); scene.add(hologram); mapObjects.push(hologram);
+    pl(0,2.5,0, acc, 3, 10);
+    // 4 radial wall segments — create corridors
+    [-1,1].forEach(sx=>[-1,1].forEach(sz=>{
+      box(sx*12, 1.8, sz*4, 0.6, 3.5, 8, M(theme.wall));
+      box(sx*4, 1.8, sz*12, 8, 3.5, 0.6, M(theme.wall));
+    }));
+    // Consoles in quadrants
+    [[-9,9],[9,9],[-9,-9],[9,-9],[0,14],[0,-14],[14,0],[-14,0]].forEach(([x,z])=>console_(x,z,Math.atan2(-z,-x),acc));
+    // Overhead beam grid
+    [-10,0,10].forEach(x=>box(x,6.5,0, 0.4,0.3,ARENA*1.5, M(theme.pillar)));
+    [-10,0,10].forEach(z=>box(0,6.5,z, ARENA*1.5,0.3,0.4, M(theme.pillar)));
+    pl(0,6,0, acc,1.5,40);
 
-    } else if (theme.obstacles==='trees') {
-      // Trunk + canopy
-      const g=new THREE.Group();
-      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.3,rng(1.5,3),6),
-        new THREE.MeshStandardMaterial({color:0x3d2200}));
-      const h=trunk.geometry.parameters.height;
-      trunk.position.y=h/2;
-      g.add(trunk);
-      const canopy=new THREE.Mesh(new THREE.SphereGeometry(rng(0.7,1.4),7,6),
-        new THREE.MeshStandardMaterial({color:0x0a4a15}));
-      canopy.position.y=h+0.5;
-      g.add(canopy);
-      g.position.set(px,0,pz);
-      scene.add(g); mapObjects.push(g); continue;
+  } else if (lvl===1) {
+    // ── Star Destroyer Bridge ────────────────────────────────
+    // Central elevated walkway strip
+    box(0,0.25,0, 5,0.5,ARENA*1.4, M(theme.wall));
+    // Raised command station on walkway
+    box(0,0.7,0, 3,0.4,3, M(theme.pillar));
+    cyl(0,1.5,0, 0.3,1.8,8, M(theme.pillar));
+    pl(0,2,0, acc,2,10);
+    // Two rows of consoles flanking the catwalk
+    for(let i=-3;i<=3;i++){
+      const z=i*4.5;
+      if(Math.abs(z)<3) continue;
+      console_(-9,z, 0, acc);
+      console_( 9,z, Math.PI, acc);
+    }
+    // Side pit walls (the characteristic Star Destroyer pit)
+    box(-7,0.8,0, 0.5,1.6,ARENA*1.5, M(theme.wall));
+    box( 7,0.8,0, 0.5,1.6,ARENA*1.5, M(theme.wall));
+    // Viewport wall with blue glow at far end
+    box(0,2.5,ARENA-2, ARENA*2,5,0.8, M(theme.pillar));
+    for(let i=-3;i<=3;i++){
+      const viewM=new THREE.MeshStandardMaterial({color:0x001133,emissive:0x002266,emissiveIntensity:0.8});
+      const win=new THREE.Mesh(new THREE.BoxGeometry(3.5,2.5,0.1),viewM);
+      win.position.set(i*4.5, 2.5, ARENA-1.7); scene.add(win); mapObjects.push(win);
+    }
+    pl(0,3,ARENA-3, 0x0044ff,2,20);
+    // Overhead lighting strips
+    [-6,0,6].forEach(x=>{ const strip=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.08,ARENA*1.8),ME(acc,0.7)); strip.position.set(x,6,0); scene.add(strip); mapObjects.push(strip); });
+    // Scattered crates at ends
+    [[-12,-12],[12,-12],[-12,12],[12,12]].forEach(([x,z])=>crate_(x,z,2,acc));
 
-    } else if (theme.obstacles==='rocks') {
-      const s=rng(0.8,2.2);
-      mesh=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),
-        new THREE.MeshStandardMaterial({color:0x2a1500,roughness:1}));
-      mesh.position.set(px,s*0.5,pz);
-      mesh.rotation.set(rng(0,Math.PI),rng(0,Math.PI),rng(0,Math.PI));
+  } else if (lvl===2) {
+    // ── Imperial Hangar Bay ──────────────────────────────────
+    // Landing pad 1 (left)
+    box(-10,0.08,0, 10,0.15,10, ME(0x333300,0.15));
+    // Landing pad 2 (right)
+    box(10,0.08,0, 10,0.15,10, ME(0x333300,0.15));
+    // Yellow landing stripe lights
+    [-4,-2,0,2,4].forEach(i=>{ const strip=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.06,10),ME(0xffcc00,1.0)); strip.position.set(-10+i*2,0.14,0); scene.add(strip); mapObjects.push(strip); });
+    [-4,-2,0,2,4].forEach(i=>{ const strip=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.06,10),ME(0xffcc00,1.0)); strip.position.set(10+i*2,0.14,0); scene.add(strip); mapObjects.push(strip); });
+    pl(-10,3,0, 0xffcc00,2,15);
+    pl( 10,3,0, 0xffcc00,2,15);
+    // TIE fighter silhouette — left pad
+    cyl(-10,2.5,0, 0.35,5.0,8, M(0x222222)); // cockpit body
+    box(-10,2.5,-3.5, 3.5,3.5,0.25, M(0x1a1a1a)); // wing L
+    box(-10,2.5,3.5, 3.5,3.5,0.25, M(0x1a1a1a)); // wing R
+    // TIE on right pad
+    cyl(10,2.5,0, 0.35,5.0,8, M(0x222222));
+    box(10,2.5,-3.5, 3.5,3.5,0.25, M(0x1a1a1a));
+    box(10,2.5, 3.5, 3.5,3.5,0.25, M(0x1a1a1a));
+    // Fuel pipes along side walls
+    [-16,-8,0,8,16].forEach(z=>pipe_(-22,z, 4.0, acc));
+    [-16,-8,0,8,16].forEach(z=>pipe_( 22,z, 4.0, acc));
+    // Maintenance crane arm overhead (center)
+    box(0,7,0, 22,0.35,0.35, M(theme.pillar));
+    box(0,7.35,0, 0.35,0.7,8, M(theme.pillar)); // hook rail
+    // Cargo crates near walls
+    [[-20,-5],[-20,5],[20,-5],[20,5],[-5,-20],[5,-20]].forEach(([x,z])=>crate_(x,z,Math.ceil(rng(1,3)),acc));
+    // Bay door (back wall partial)
+    box(0,3.5,-ARENA+1, ARENA*2,7,0.9, M(theme.wall));
+    const doorM=new THREE.MeshStandardMaterial({color:0x111111,roughness:0.8});
+    box(-7,3.5,-ARENA+1.5, 14,6,0.5, doorM);
+    pl(0,6,-ARENA+3, 0xffcc00,1.5,20);
 
-    } else if (theme.obstacles==='altars') {
-      const g=new THREE.Group();
-      const base=new THREE.Mesh(new THREE.BoxGeometry(1.6,0.4,1.6),
-        new THREE.MeshStandardMaterial({color:0x2a0000}));
-      base.position.y=0.2; g.add(base);
-      const top=new THREE.Mesh(new THREE.BoxGeometry(1.0,1.2,1.0),
-        new THREE.MeshStandardMaterial({color:0x1a0000}));
-      top.position.y=1.0; g.add(top);
-      // Red glow candle
-      const candle=new THREE.PointLight(0xff0000,0.8,4);
-      candle.position.y=1.8; g.add(candle);
-      g.position.set(px,0,pz);
-      scene.add(g); mapObjects.push(g); continue;
+  } else if (lvl===3) {
+    // ── Rebel Cruiser Engine Room ────────────────────────────
+    // Two massive engine cylinders — the heart of the level
+    cyl(-8,4.5,0, 3.5,9,16, M(theme.pillar));
+    cyl( 8,4.5,0, 3.5,9,16, M(theme.pillar));
+    // Engine glow rings
+    for(let i=0;i<5;i++){
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(3.5,0.18,8,20), ME(acc,1.2));
+      ring.rotation.x=Math.PI/2; ring.position.set(-8,1.5+i*1.6,0); scene.add(ring); mapObjects.push(ring);
+      const ring2=ring.clone(); ring2.position.set(8,1.5+i*1.6,0); scene.add(ring2); mapObjects.push(ring2);
+    }
+    pl(-8,5,0, acc,3,14);
+    pl( 8,5,0, acc,3,14);
+    // Dense pipe network
+    const pipeXZ=[[-18,-10],[-18,-2],[-18,6],[18,-10],[18,-2],[18,6],[0,-18],[0,18],[-6,-18],[6,-18],[-6,18],[6,18]];
+    pipeXZ.forEach(([x,z])=>pipe_(x,z, rng(3,6), acc));
+    // Overhead horizontal pipes
+    [-14,0,14].forEach(z=>{ const pm2=M(theme.pillar); pm2.metalness=0.8; const hp=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,ARENA*1.8,8),pm2); hp.rotation.z=Math.PI/2; hp.position.set(0,7,z); scene.add(hp); mapObjects.push(hp); pl(0,7,z,acc,0.6,8); });
+    // Coolant tanks (short fat cylinders)
+    [[-16,12],[16,12],[-16,-14],[16,-14]].forEach(([x,z])=>{ cyl(x,2,z, 2,4,12, M(theme.pillar)); pl(x,3.5,z, 0x00ff88, 1.2, 8); });
+    // Raised grating platforms
+    [[-3,10],[3,10],[-3,-10],[3,-10]].forEach(([x,z])=>box(x,0.35,z, 5,0.7,5, M(theme.wall)));
 
-    } else if (theme.obstacles==='barrels') {
-      const g=new THREE.Group();
-      const barrel=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.45,0.9,8),
-        new THREE.MeshStandardMaterial({color:0x334400}));
-      barrel.position.y=0.45; g.add(barrel);
-      // Toxic glow
-      const glow=new THREE.PointLight(0x88ff00,0.6,3);
-      glow.position.y=1.0; g.add(glow);
-      const stack=Math.floor(rng(1,3));
-      for(let s=1;s<stack;s++){
-        const b2=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.45,0.9,8),
-          new THREE.MeshStandardMaterial({color:0x334400}));
-        b2.position.set(rng(-0.3,0.3),0.45+s*0.9,rng(-0.3,0.3)); g.add(b2);
-      }
-      g.position.set(px,0,pz);
-      scene.add(g); mapObjects.push(g); continue;
-
-    } else if (theme.obstacles==='tombs') {
-      const g=new THREE.Group();
-      const slab=new THREE.Mesh(new THREE.BoxGeometry(0.6,1.4,0.15),
-        new THREE.MeshStandardMaterial({color:0x2a002a}));
-      slab.position.y=0.7; g.add(slab);
-      const arch=new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.32,0.15,8,1,false,0,Math.PI),
-        new THREE.MeshStandardMaterial({color:0x220022}));
-      arch.rotation.z=Math.PI/2; arch.position.set(0,1.42,0); g.add(arch);
-      g.position.set(px,0,pz);
-      g.rotation.y=rng(0,Math.PI*2);
-      scene.add(g); mapObjects.push(g); continue;
-
-    } else if (theme.obstacles==='pumpkins') {
-      const g=new THREE.Group();
-      const body=new THREE.Mesh(new THREE.SphereGeometry(rng(0.4,0.9),8,7),
-        new THREE.MeshStandardMaterial({color:0xff6600, emissive:0x441100}));
-      body.scale.y=0.8; body.position.y=0.4; g.add(body);
-      const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.09,0.3,5),
-        new THREE.MeshStandardMaterial({color:0x336600}));
-      stem.position.y=0.95; g.add(stem);
-      const gl=new THREE.PointLight(0xff8800,0.5,2.5);
-      gl.position.y=0.5; g.add(gl);
-      g.position.set(px,0,pz);
-      scene.add(g); mapObjects.push(g); continue;
-
-    } else if (theme.obstacles==='consoles') {
-      // Imperial control console — desk + screens + blinking lights
-      const g = new THREE.Group();
-      const acc = theme.accentColor||0x00aaff;
-      const desk = new THREE.Mesh(new THREE.BoxGeometry(rng(1.4,2.4),0.9,rng(0.8,1.2)),
-        new THREE.MeshStandardMaterial({color:theme.pillar,roughness:0.4,metalness:0.6}));
-      desk.position.y=0.45; g.add(desk);
-      // Screen panel
-      const screen = new THREE.Mesh(new THREE.BoxGeometry(rng(1.0,1.8),rng(0.5,0.9),0.07),
-        new THREE.MeshStandardMaterial({color:acc,emissive:acc,emissiveIntensity:0.55,roughness:0.1}));
-      screen.position.set(0,1.15,0); screen.rotation.x=-0.25; g.add(screen);
-      // Indicator lights row
-      const lightColors=[0xff0000,0x00ff00,0xffff00,0x00aaff];
-      for(let l=0;l<4;l++){
-        const lc=lightColors[l%lightColors.length];
-        const btn=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.09,0.06),
-          new THREE.MeshStandardMaterial({color:lc,emissive:lc,emissiveIntensity:1.4}));
-        btn.position.set(-0.2+l*0.14,0.92,0.46); g.add(btn);
-      }
-      // Glow light from screen
-      const gl=new THREE.PointLight(acc,1.0,5);
-      gl.position.set(0,1.4,0.3); g.add(gl);
-      g.position.set(px,0,pz);
-      g.rotation.y=rng(0,Math.PI*2);
-      scene.add(g); mapObjects.push(g); continue;
-
-    } else if (theme.obstacles==='crates') {
-      // Imperial cargo crates — stacked metal boxes
-      const g = new THREE.Group();
-      const acc = theme.accentColor||0xffcc00;
-      const stack = Math.floor(rng(1,3));
-      for(let s=0;s<stack;s++){
-        const w=rng(0.8,1.6), d=rng(0.8,1.4), h=rng(0.7,1.1);
-        const crate=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),
-          new THREE.MeshStandardMaterial({color:theme.pillar,roughness:0.5,metalness:0.5}));
-        crate.position.set(rng(-0.2,0.2), h/2+s*1.1, rng(-0.2,0.2)); g.add(crate);
-        // Edge banding
-        const band=new THREE.Mesh(new THREE.BoxGeometry(w+0.02,0.06,d+0.02),
-          new THREE.MeshStandardMaterial({color:acc,emissive:acc,emissiveIntensity:0.4,roughness:0.3,metalness:0.8}));
-        band.position.set(rng(-0.2,0.2), h/2+s*1.1, rng(-0.2,0.2)); g.add(band);
-      }
-      g.position.set(px,0,pz);
-      g.rotation.y=rng(0,Math.PI*2);
-      scene.add(g); mapObjects.push(g); continue;
-
-    } else if (theme.obstacles==='pipes') {
-      // Coolant/fuel pipes — vertical + horizontal runs with glowing joints
-      const g = new THREE.Group();
-      const acc = theme.accentColor||0x00ff88;
-      const pipeH = rng(2.0,4.5);
-      const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,pipeH,8),
-        new THREE.MeshStandardMaterial({color:theme.pillar,roughness:0.35,metalness:0.75}));
-      pipe.position.y=pipeH/2; g.add(pipe);
-      // Flange rings
-      for(let f=0;f<3;f++){
-        const flange=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,0.14,8),
-          new THREE.MeshStandardMaterial({color:acc,emissive:acc,emissiveIntensity:0.5,roughness:0.2,metalness:0.9}));
-        flange.position.y=0.5+f*(pipeH*0.35); g.add(flange);
-      }
-      // Horizontal cross-pipe
-      const cross=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,rng(1.2,2.4),8),
-        new THREE.MeshStandardMaterial({color:theme.pillar,roughness:0.35,metalness:0.75}));
-      cross.rotation.z=Math.PI/2; cross.position.set(0,rng(1.0,pipeH*0.6),0); g.add(cross);
-      // Glow at joint
-      const jgl=new THREE.PointLight(acc,0.9,4);
-      jgl.position.set(0,rng(1,pipeH*0.5),0); g.add(jgl);
-      g.position.set(px,0,pz);
-      g.rotation.y=rng(0,Math.PI*2);
-      scene.add(g); mapObjects.push(g); continue;
+  } else if (lvl===4) {
+    // ── Death Star Reactor Core ──────────────────────────────
+    // Central reactor column
+    cyl(0,5,0, 1.5,10,16, M(theme.pillar));
+    // Energy beam inside — glowing core
+    const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,12,12),
+      new THREE.MeshStandardMaterial({color:acc,emissive:acc,emissiveIntensity:4,transparent:true,opacity:0.55}));
+    beam.position.set(0,5,0); scene.add(beam); mapObjects.push(beam);
+    pl(0,5,0, acc,5,20);
+    // Circular catwalk at radius 10, 8 sections with 2-unit gaps
+    for(let i=0;i<8;i++){
+      const a=(i/8)*Math.PI*2, r=10;
+      const cx=Math.cos(a)*r, cz=Math.sin(a)*r;
+      box(cx,0.35,cz, 4,0.7,4, M(theme.wall));
+      // Support column under each platform
+      cyl(cx,0.15,cz, 0.3,0.3,6, M(theme.pillar));
+    }
+    // 4 bridges from outer ring to center column (cardinal directions)
+    [0,1,2,3].forEach(i=>{ const a=i*Math.PI/2; box(Math.cos(a)*5,0.35,Math.sin(a)*5, Math.cos(a)*0.1+Math.sin(a)*8+0.8, 0.5, Math.sin(a)*0.1+Math.cos(a)*8+0.8, M(theme.wall)); });
+    // Outer reactor ring
+    for(let i=0;i<16;i++){
+      const a=(i/16)*Math.PI*2, r=18;
+      if(i%2===0) continue; // gap every other one
+      box(Math.cos(a)*r, 2, Math.sin(a)*r, 0.8,4,0.8, M(theme.pillar));
+      pl(Math.cos(a)*r, 3.5, Math.sin(a)*r, acc, 0.7, 5);
+    }
+    // Energy conduit pipes around the inner ring
+    for(let i=0;i<8;i++){
+      const a=(i/8)*Math.PI*2, r=6;
+      pipe_(Math.cos(a)*r, Math.sin(a)*r, 3.5, acc);
     }
 
-    if (mesh) { mesh.castShadow=true; scene.add(mesh); mapObjects.push(mesh); }
+  } else if (lvl===5) {
+    // ── Star Destroyer Detention Block ──────────────────────
+    // Grid of cell walls creating corridors — 3x3 cell grid
+    const cellW=7, wallT=0.6, wallH=3.5;
+    for(let row=0;row<3;row++) for(let col=0;col<4;col++){
+      const cx=(col-1.5)*cellW, cz=(row-1)*cellW;
+      // North wall of each cell
+      box(cx, wallH/2, cz-cellW/2+wallT/2, cellW, wallH, wallT, M(theme.wall));
+      // West wall
+      box(cx-cellW/2+wallT/2, wallH/2, cz, wallT, wallH, cellW, M(theme.wall));
+    }
+    // Cell force-field glow strips (door frames)
+    for(let row=0;row<3;row++) for(let col=0;col<3;col++){
+      const cx=(col-1)*cellW, cz=(row-1)*cellW;
+      const fgM=ME(acc,1.0);
+      const door=new THREE.Mesh(new THREE.BoxGeometry(0.08,2.4,wallT+0.06),fgM);
+      door.position.set(cx+cellW/2-wallT,1.2,cz); scene.add(door); mapObjects.push(door);
+      pl(cx+cellW/2-wallT, 1.5, cz, acc, 0.6, 4);
+    }
+    // Guard post podiums at corridor junctions
+    [[0,0],[0,-7],[0,7]].forEach(([x,z])=>{ cyl(x,0.8,z, 0.8,1.6,8, M(theme.pillar)); pl(x,2,z, acc,1,6); });
+    // Overhead strip lighting
+    for(let row=-1;row<=1;row++){ const strip=new THREE.Mesh(new THREE.BoxGeometry(ARENA*1.8,0.1,0.3),ME(acc,0.6)); strip.position.set(0,4.5,row*cellW); scene.add(strip); mapObjects.push(strip); }
+
+  } else if (lvl===6) {
+    // ── Space Station Docking Port ───────────────────────────
+    // Large circular docking ring floor marking
+    const ringFloor=new THREE.Mesh(new THREE.RingGeometry(10,12,32), new THREE.MeshStandardMaterial({color:acc,emissive:acc,emissiveIntensity:0.25,side:THREE.DoubleSide}));
+    ringFloor.rotation.x=-Math.PI/2; ringFloor.position.y=0.06; scene.add(ringFloor); mapObjects.push(ringFloor);
+    pl(0,1,0, acc,2,18);
+    // Docking clamp structures at cardinal points
+    [0,1,2,3].forEach(i=>{ const a=i*Math.PI/2, r=11; const cx=Math.cos(a)*r, cz=Math.sin(a)*r; box(cx,1.5,cz, 2.5,3,2.5, M(theme.pillar)); pl(cx,3.5,cz, acc,1,7); });
+    // Airlock corridor tubes at 45 degrees
+    [1,3,5,7].forEach(i=>{ const a=i*Math.PI/4, r=8; const cx=Math.cos(a)*r, cz=Math.sin(a)*r; cyl(cx,1.5,cz, 1.0,3,10, M(theme.wall)); });
+    // Viewport windows showing "space" — dark panels with star glow
+    for(let i=0;i<8;i++){
+      const a=(i/8)*Math.PI*2, r=ARENA-3;
+      const vp=new THREE.Mesh(new THREE.BoxGeometry(3.5,3,0.15),
+        new THREE.MeshStandardMaterial({color:0x000511,emissive:0x001133,emissiveIntensity:0.9}));
+      vp.position.set(Math.cos(a)*r, 2, Math.sin(a)*r); vp.rotation.y=-a; scene.add(vp); mapObjects.push(vp);
+      // Stars behind each viewport
+      pl(Math.cos(a)*(r-1), 2, Math.sin(a)*(r-1), 0x4488ff, 0.8, 6);
+    }
+    // Fuel pipe arms
+    [0,Math.PI/2,Math.PI,Math.PI*1.5].forEach(a=>{ for(let t=0.3;t<0.9;t+=0.3){ const r=t*15; pipe_(Math.cos(a)*r, Math.sin(a)*r, rng(2,4.5), acc); }});
+    // Control consoles around outer ring
+    for(let i=0;i<6;i++){ const a=(i/6)*Math.PI*2, r=16; console_(Math.cos(a)*r, Math.sin(a)*r, -a+Math.PI, acc); }
+
+  } else {
+    // ── Super Star Destroyer Combat Deck ─────────────────────
+    // Central tactical display — large raised hexagonal platform
+    for(let i=0;i<6;i++){
+      const a=(i/6)*Math.PI*2, r=5;
+      box(Math.cos(a)*r*0.5, 0.3, Math.sin(a)*r*0.5, r*0.9, 0.6, r*0.5, M(theme.wall));
+    }
+    box(0,0.55,0, 6,1.1,6, M(theme.wall));
+    // Holographic star map above platform
+    cyl(0,2,0, 2.5,0.1,20, ME(acc,0.4));
+    pl(0,2.5,0, acc, 3, 12);
+    // Weapon turret stations — 4 corners
+    [[-15,15],[15,15],[-15,-15],[15,-15]].forEach(([x,z])=>{
+      cyl(x,1.2,z, 1.0,2.4,8, M(theme.pillar));
+      // Turret barrels
+      box(x,2.2,z+1.2, 0.4,0.4,2.5, M(theme.pillar));
+      box(x,2.2,z-1.2, 0.4,0.4,2.5, M(theme.pillar));
+      pl(x,2.5,z, acc, 1.2, 8);
+    });
+    // Command pillar rows flanking center
+    [-6,6].forEach(sx=>[-12,-4,4,12].forEach(z=>{ cyl(sx,2.2,z, 0.5,4.4,8, M(theme.pillar)); pl(sx,4.5,z, acc,0.7,6); }));
+    // Blast shield cover positions (low walls)
+    [[-10,8],[10,8],[-10,-8],[10,-8],[0,12],[0,-12]].forEach(([x,z])=>box(x,0.7,z, 4,1.4,0.7, M(theme.wall)));
+    // Overhead support trusses — X pattern
+    box(0,7,0, ARENA*1.8,0.4,0.4, M(theme.pillar));
+    box(0,7,0, 0.4,0.4,ARENA*1.8, M(theme.pillar));
+    box(0,7,0, ARENA*1.3,0.4,0.4, M(theme.pillar)); box(0,7,0, 0.4,0.4,ARENA*1.3, M(theme.pillar));
+    pl(0,7,0, acc,2,50);
+    // Console banks
+    for(let i=-2;i<=2;i++){ console_(-18, i*5, 0, acc); console_(18, i*5, Math.PI, acc); }
+    // Scattered crates
+    [[-20,0],[-20,10],[-20,-10],[20,0],[20,10],[20,-10]].forEach(([x,z])=>crate_(x,z,2,acc));
   }
 
   // Ambient particles (dust / snow / embers / spores)
