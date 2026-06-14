@@ -783,11 +783,86 @@ function spawnBullet(isEnemy=false, from, dir, spd, dmg, col) {
   (isEnemy ? eBullets : bullets).push(b);
 }
 
+function doMeleeSwing() {
+  const def = WEAPONS_DEF[currentWeapon];
+  const aim = getAimDir();
+  const pp = playerGroup.position;
+  const aimAngle = Math.atan2(aim.x, aim.z);
+  const halfArc = def.arc / 2;
+  const range = def.range;
+
+  // Hit all enemies in the swing arc
+  for (let i = enemies.length-1; i >= 0; i--) {
+    const e = enemies[i];
+    if (e.frozen) continue;
+    const dx = e.mesh.position.x - pp.x;
+    const dz = e.mesh.position.z - pp.z;
+    const dist = Math.sqrt(dx*dx+dz*dz);
+    if (dist > range) continue;
+    const angle = Math.atan2(dx, dz);
+    let diff = angle - aimAngle;
+    while (diff > Math.PI)  diff -= Math.PI*2;
+    while (diff < -Math.PI) diff += Math.PI*2;
+    if (Math.abs(diff) > halfArc) continue;
+    // Hit!
+    e.hp -= def.damage;
+    e.hitFlash = 8;
+    sndHit();
+    spawnParticles(e.mesh.position, def.bladeColor, 5);
+    if (currentWeapon==='electrostaff') {
+      // Chain lightning — stun nearby
+      e.frozen = true;
+      e.frozenTimer = 1.2;
+    }
+    if (e.hp <= 0) { killEnemy(i); }
+  }
+
+  // Visual swing arc — fan of line segments
+  const arcSegs = 14;
+  const arcMat = new THREE.MeshBasicMaterial({color:def.bladeColor, transparent:true, opacity:0.75, side:THREE.DoubleSide});
+  const arcGroup = new THREE.Group();
+  arcGroup.position.set(pp.x, 0.7, pp.z);
+  for (let s=0; s<=arcSegs; s++) {
+    const a = aimAngle - halfArc + (s/arcSegs)*def.arc;
+    const x2 = Math.sin(a)*range, z2 = Math.cos(a)*range;
+    const midX = x2*0.55, midZ = z2*0.55;
+    const len = range*0.9;
+    const bar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.035, 0.035, len, 4),
+      arcMat.clone()
+    );
+    bar.position.set(midX, 0, midZ);
+    bar.rotation.z = Math.PI/2;
+    bar.rotation.y = -a;
+    arcGroup.add(bar);
+  }
+  // Arc tip glow
+  const tipGeo = new THREE.TorusGeometry(range, 0.06, 6, arcSegs+1, def.arc);
+  tipGeo.rotateY(-aimAngle - Math.PI/2 + halfArc);
+  const tip = new THREE.Mesh(tipGeo, new THREE.MeshBasicMaterial({color:def.bladeColor, transparent:true, opacity:0.6}));
+  arcGroup.add(tip);
+  scene.add(arcGroup);
+  // Arc glow light
+  const arcLight = new THREE.PointLight(def.bladeColor, 4, range*1.5);
+  arcLight.position.set(pp.x + Math.sin(aimAngle)*range*0.5, 1, pp.z + Math.cos(aimAngle)*range*0.5);
+  scene.add(arcLight);
+  setTimeout(() => { scene.remove(arcGroup); scene.remove(arcLight); }, 120);
+
+  // Sound
+  if (currentWeapon==='lightsaber')   sndSaber();
+  else if (currentWeapon==='vibroblade') sndVibroSlash();
+  else sndElectroHit();
+
+  shootTimer = def.cd * fireCdMult;
+  refreshWeaponBar();
+}
+
 function doShoot() {
   if (shootTimer>0||choosingMutation||gameOver) return;
   const w = inventory[currentWeapon];
   if (!w) return;
   const def = WEAPONS_DEF[currentWeapon];
+  if (def.melee) { doMeleeSwing(); return; }
   const aim = getAimDir();
 
   for (let i=0;i<def.burst;i++) {
