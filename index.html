@@ -272,6 +272,9 @@ function sndBoss()     { _osc(100,'sawtooth',0.9,0.3,55); _noise(0.4,0.25); }
 function sndPower()    { _osc(280,'sine',0.4,0.22,2200); }
 function sndExplosion(){ _noise(0.5,0.4); _osc(120,'sawtooth',0.3,0.2,40); }
 function sndWaveClear(){ [400,500,650].forEach((f,i)=>setTimeout(()=>_osc(f,'sine',0.3,0.15),i*130)); }
+function sndSaber()    { _osc(900,'sine',0.08,0.22,600); _osc(1100,'sine',0.12,0.15,400); }
+function sndVibroSlash(){ _noise(0.06,0.12); _osc(280,'square',0.1,0.14,180); }
+function sndElectroHit(){ _osc(200,'square',0.15,0.2,600); _noise(0.08,0.12); }
 
 // ─── SETUP ───────────────────────────────
 const canvas = document.getElementById('c');
