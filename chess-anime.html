@@ -1213,7 +1213,9 @@ function checkGameOver() {
       const loser  = turn==='w'?'White':'Black';
       statusEl.textContent = `☠️ CHECKMATE! ${winner} wins!`;
       statusEl.classList.add('checkmate');
-      setTimeout(()=>showWin(winner), 500);
+      soundVictory();
+      screenFlash('#f59e0b55');
+      setTimeout(()=>showWin(winner), 800);
     } else {
       statusEl.textContent = '🤝 STALEMATE — Draw!';
       statusEl.classList.add('stalemate');
