@@ -672,11 +672,18 @@ function buildMap(waveNum) {
   }
 
   // Update location display
+  const locationSubs = {
+    'Death Star — Command Deck':         'IMPERIAL SUPERWEAPON · SECTOR 7-G',
+    'Star Destroyer — Bridge':           'ISD DEVASTATOR · OUTER RIM FLEET',
+    'Imperial Hangar Bay':               'TIE FIGHTER BAY · DOCKING LEVEL 3',
+    'Rebel Cruiser — Engine Room':       'MC80 LIBERTY · REACTOR DECK',
+    'Death Star — Reactor Core':         'IMPERIAL SUPERWEAPON · CORE ACCESS',
+    'Star Destroyer — Detention Block':  'ISD EXECUTOR · CELL BLOCK AA-23',
+    'Space Station — Docking Port':      'IMPERIAL STATION · BAY 94',
+    'Super Star Destroyer — Combat Deck':'SSD EXECUTOR · COMBAT OPERATIONS',
+  };
   document.getElementById('location-name').textContent = theme.name;
-  document.getElementById('location-sub').textContent = theme.name === 'Death Star' ? 'IMPERIAL STATION' :
-    theme.name === 'Coruscant' ? 'GALACTIC CORE' : theme.name === 'Mustafar' ? 'OUTER RIM — VOLCANIC' :
-    theme.name === 'Hoth' ? 'ECHO BASE SECTOR' : theme.name === 'Endor' ? 'FOREST MOON' :
-    theme.name === 'Dagobah' ? 'UNKNOWN SYSTEM' : theme.name === 'Naboo' ? 'MID RIM' : 'OUTER RIM TERRITORY';
+  document.getElementById('location-sub').textContent = locationSubs[theme.name] || 'IMPERIAL VESSEL';
 
   // Theme name flash
   showBigMsg(`${theme.name}`, '#ff8800', 2000);
