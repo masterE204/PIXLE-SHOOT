@@ -1456,6 +1456,409 @@ function newGame() {
   render();
 }
 
+// ─── 3D Piece Card Factory ───────────────────────────────────────────────────
+const PIECE_META = {
+  k: { label:'KING',    icon:['♔','♚'], accent:['#ffd700','#ffd700'] },
+  q: { label:'ARCANE',  icon:['♕','♛'], accent:['#e879f9','#d946ef'] },
+  r: { label:'CASTLE',  icon:['♖','♜'], accent:['#60a5fa','#3b82f6'] },
+  b: { label:'MYSTIC',  icon:['♗','♝'], accent:['#34d399','#10b981'] },
+  n: { label:'BLADE',   icon:['♘','♞'], accent:['#fb923c','#f97316'] },
+  p: { label:'WARRIOR', icon:['♙','♟'], accent:['#94a3b8','#64748b'] },
+};
+
+function makePieceCard(p, r, c) {
+  const ci = p.c==='w'?0:1;
+  const meta = PIECE_META[p.t];
+  const card = document.createElement('div');
+  const typeClass = p.t==='b' ? 'pc-b2' : 'pc-'+p.t;
+  card.className = `piece-card pc-${p.c} ${typeClass}`;
+  card.style.setProperty('--acc', meta.accent[ci]);
+
+  const icon = document.createElement('div');
+  icon.className = 'piece-icon';
+  icon.textContent = meta.icon[ci];
+  icon.style.filter = `drop-shadow(0 0 5px ${meta.accent[ci]})`;
+
+  const name = document.createElement('div');
+  name.className = 'piece-name';
+  name.textContent = meta.label;
+  name.style.color = meta.accent[ci];
+
+  card.appendChild(icon);
+  card.appendChild(name);
+
+  // King: shield ring
+  if (p.t==='k') {
+    const shield = document.createElement('div');
+    shield.className = 'king-shield' + (inCheck(board, p.c) ? ' king-shield-danger' : '');
+    card.appendChild(shield);
+  }
+  // Queen: aura ring
+  if (p.t==='q') {
+    const aura = document.createElement('div');
+    aura.className = 'queen-aura';
+    card.appendChild(aura);
+  }
+
+  return card;
+}
+
+// ─── Force Fields ─────────────────────────────────────────────────────────────
+let showFF = false;
+
+function toggleForceFields() {
+  showFF = !showFF;
+  const btn = document.getElementById('ff-btn');
+  btn.classList.toggle('btn-active', showFF);
+  btn.textContent = showFF ? '🛡️ Fields ON' : '🛡️ Force Fields';
+  render();
+}
+
+function getAttackMap(b, color) {
+  const map = {};
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+    if (b[r][c] && b[r][c].c===color) {
+      rawMoves(b,r,c).forEach(([mr,mc]) => { map[`${mr},${mc}`] = true; });
+    }
+  }
+  return map;
+}
+
+function applyFFOverlay(cell, r, c) {
+  const wMap = getAttackMap(board,'w');
+  const bMap = getAttackMap(board,'b');
+  const key = `${r},${c}`;
+  const byW = !!wMap[key], byB = !!bMap[key];
+  if (byW && byB) cell.classList.add('ff-both');
+  else if (byW)   cell.classList.add('ff-safe');   // white controls
+  else if (byB)   cell.classList.add('ff-danger'); // black controls
+
+  // Queen power lines highlight
+  const queens = [];
+  for (let qr=0;qr<8;qr++) for (let qc=0;qc<8;qc++)
+    if (board[qr][qc] && board[qr][qc].t==='q') queens.push({qr,qc,c:board[qr][qc].c});
+  queens.forEach(({qr,qc,c:qc2}) => {
+    const moves = rawMoves(board,qr,qc);
+    if (moves.find(([mr,mc])=>mr===r&&mc===c)) cell.classList.add('ff-queen-range');
+  });
+}
+
+function drawFFCanvas() {
+  const canvas = document.getElementById('ff-canvas');
+  const wrapper = document.getElementById('board-wrapper');
+  canvas.width  = wrapper.offsetWidth;
+  canvas.height = wrapper.offsetHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const cw = canvas.width/8, ch = canvas.height/8;
+
+  // Draw queen power beams
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+    if (!board[r][c] || board[r][c].t!=='q') continue;
+    const isWhite = board[r][c].c==='w';
+    const color = isWhite ? 'rgba(255,215,0,0.25)' : 'rgba(232,121,249,0.25)';
+    const glow  = isWhite ? 'rgba(255,215,0,0.6)'  : 'rgba(232,121,249,0.6)';
+    const moves = rawMoves(board, r, c);
+    const cx = (c+0.5)*cw, cy = (r+0.5)*ch;
+    moves.forEach(([mr,mc]) => {
+      const tx = (mc+0.5)*cw, ty = (mr+0.5)*ch;
+      ctx.beginPath();
+      ctx.moveTo(cx,cy);
+      ctx.lineTo(tx,ty);
+      ctx.strokeStyle = glow;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4,4]);
+      ctx.stroke();
+    });
+  }
+
+  // Draw king protection zone label
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+    if (!board[r][c] || board[r][c].t!=='k') continue;
+    const color = board[r][c].c==='w' ? 'rgba(0,210,255,0.18)' : 'rgba(200,80,255,0.18)';
+    const border= board[r][c].c==='w' ? 'rgba(0,210,255,0.6)' : 'rgba(200,80,255,0.7)';
+    ctx.beginPath();
+    for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++) {
+      const nr=r+dr, nc=c+dc;
+      if (nr<0||nr>7||nc<0||nc>7) continue;
+      ctx.rect(nc*cw+1, nr*ch+1, cw-2, ch-2);
+    }
+    ctx.fillStyle = color;
+    ctx.fill();
+    // King's own cell
+    ctx.beginPath();
+    ctx.arc((c+0.5)*cw,(r+0.5)*ch, Math.min(cw,ch)*0.38, 0, Math.PI*2);
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([]);
+    ctx.stroke();
+  }
+}
+
+function clearFFCanvas() {
+  const canvas = document.getElementById('ff-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+// ─── 3D Board Tilt ────────────────────────────────────────────────────────────
+let is3D = false;
+function toggle3D() {
+  is3D = !is3D;
+  document.getElementById('board-container').classList.toggle('board-3d', is3D);
+  const btn = document.getElementById('d3-btn');
+  btn.classList.toggle('btn-active', is3D);
+  btn.textContent = is3D ? '🎮 3D ON' : '🎮 3D Mode';
+}
+
+// ─── VR / Three.js Scene ─────────────────────────────────────────────────────
+let vrOpen = false, vrScene=null, vrRenderer=null, vrCamera=null;
+let vrPieceMeshes=[], vrSelected=null, vrValidTargets=[];
+let vrMouseDown=false, vrLastMouse={x:0,y:0}, vrTheta=0.7, vrPhi=1.1, vrRadius=14;
+
+const PIECE_COLORS = {
+  w: { base:0xd4af37, glow:0xffd700, label:'#ffe566' },
+  b: { base:0x7c3aed, glow:0xa855f7, label:'#c4b5fd' },
+};
+const TYPE_HEIGHTS = { k:1.8, q:1.6, r:1.1, b:1.3, n:1.2, p:0.8 };
+const TYPE_RADIUS  = { k:0.38, q:0.36, r:0.32, b:0.28, n:0.30, p:0.26 };
+
+function openVR() {
+  vrOpen = true;
+  document.getElementById('vr-overlay').classList.add('show');
+  document.getElementById('vr-btn').classList.add('btn-active');
+  if (!vrScene) initVR();
+  vrSyncBoard();
+  vrAnimate();
+}
+
+function closeVR() {
+  vrOpen = false;
+  document.getElementById('vr-overlay').classList.remove('show');
+  document.getElementById('vr-btn').classList.remove('btn-active');
+  if (vrRenderer) vrRenderer.setAnimationLoop(null);
+}
+
+function initVR() {
+  const canvas = document.getElementById('vr-canvas');
+  vrRenderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+  vrRenderer.setPixelRatio(window.devicePixelRatio);
+  vrRenderer.shadowMap.enabled = true;
+  vrRenderer.setClearColor(0x050010);
+  resizeVR();
+
+  vrScene = new THREE.Scene();
+  vrScene.fog = new THREE.FogExp2(0x080018, 0.04);
+
+  vrCamera = new THREE.PerspectiveCamera(55, canvas.clientWidth/canvas.clientHeight, 0.1, 100);
+
+  // Lighting
+  vrScene.add(new THREE.AmbientLight(0x221133, 0.6));
+  const spot = new THREE.PointLight(0xa855f7, 2, 30);
+  spot.position.set(0, 12, 0);
+  vrScene.add(spot);
+  const spot2 = new THREE.PointLight(0x60a5fa, 1.5, 25);
+  spot2.position.set(8, 8, 8);
+  vrScene.add(spot2);
+
+  // Board plane (8x8 tiles)
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+    const geo = new THREE.BoxGeometry(0.98,0.15,0.98);
+    const light = (r+c)%2===0;
+    const mat = new THREE.MeshStandardMaterial({
+      color: light ? 0x2a0a4a : 0x0d0118,
+      roughness: 0.4, metalness: 0.3,
+      emissive: light ? 0x1a0030 : 0x080010,
+    });
+    const tile = new THREE.Mesh(geo, mat);
+    tile.position.set(c-3.5, 0, r-3.5);
+    tile.receiveShadow = true;
+    tile.userData = {type:'tile', r, c};
+    vrScene.add(tile);
+  }
+
+  // Board border glow
+  const edgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(8.1,0.2,8.1));
+  const edgeMat = new THREE.LineBasicMaterial({color:0xa855f7});
+  vrScene.add(new THREE.LineSegments(edgeGeo, edgeMat));
+
+  // Stars
+  const starsGeo = new THREE.BufferGeometry();
+  const starPos = new Float32Array(900);
+  for (let i=0;i<300;i++) {
+    starPos[i*3]   = (Math.random()-0.5)*80;
+    starPos[i*3+1] = (Math.random()-0.5)*80;
+    starPos[i*3+2] = (Math.random()-0.5)*80;
+  }
+  starsGeo.setAttribute('position', new THREE.BufferAttribute(starPos,3));
+  vrScene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({color:0xffffff,size:0.12,sizeAttenuation:true})));
+
+  // Mouse events
+  const cvs = canvas;
+  cvs.addEventListener('mousedown', e => { vrMouseDown=true; vrLastMouse={x:e.clientX,y:e.clientY}; });
+  cvs.addEventListener('mouseup',   e => {
+    if (Math.abs(e.clientX-vrLastMouse.x)<3 && Math.abs(e.clientY-vrLastMouse.y)<3) vrClick(e);
+    vrMouseDown=false;
+  });
+  cvs.addEventListener('mousemove', e => {
+    if (!vrMouseDown) return;
+    vrTheta -= (e.clientX - vrLastMouse.x) * 0.005;
+    vrPhi   -= (e.clientY - vrLastMouse.y) * 0.005;
+    vrPhi = Math.max(0.3, Math.min(1.4, vrPhi));
+    vrLastMouse = {x:e.clientX, y:e.clientY};
+  });
+  cvs.addEventListener('wheel', e => { vrRadius = Math.max(6, Math.min(22, vrRadius + e.deltaY*0.02)); });
+
+  // Touch
+  let lastTouch=null;
+  cvs.addEventListener('touchstart', e => { lastTouch={x:e.touches[0].clientX, y:e.touches[0].clientY}; });
+  cvs.addEventListener('touchmove',  e => {
+    if(!lastTouch) return;
+    vrTheta -= (e.touches[0].clientX-lastTouch.x)*0.006;
+    vrPhi   -= (e.touches[0].clientY-lastTouch.y)*0.006;
+    vrPhi = Math.max(0.3,Math.min(1.4,vrPhi));
+    lastTouch={x:e.touches[0].clientX, y:e.touches[0].clientY};
+  });
+  cvs.addEventListener('touchend', e => lastTouch=null);
+
+  window.addEventListener('resize', resizeVR);
+}
+
+function resizeVR() {
+  const canvas = document.getElementById('vr-canvas');
+  if(!canvas) return;
+  const w = canvas.parentElement.clientWidth;
+  const h = window.innerHeight - 60;
+  canvas.style.width  = w+'px';
+  canvas.style.height = h+'px';
+  if (vrRenderer) { vrRenderer.setSize(w, h, false); }
+  if (vrCamera)   { vrCamera.aspect = w/h; vrCamera.updateProjectionMatrix(); }
+}
+
+function vrSyncBoard() {
+  if (!vrScene) return;
+  // Remove old pieces
+  vrPieceMeshes.forEach(m => { vrScene.remove(m); if(m.children) m.children.forEach(ch=>vrScene.remove(ch)); });
+  vrPieceMeshes = [];
+
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+    if (!board[r][c]) continue;
+    const p = board[r][c];
+    const meta = PIECE_COLORS[p.c];
+    const h = TYPE_HEIGHTS[p.t] || 1;
+    const rad = TYPE_RADIUS[p.t] || 0.3;
+
+    // Body cylinder
+    const bodyGeo = new THREE.CylinderGeometry(rad, rad*1.2, h, 12);
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: meta.base, roughness:0.3, metalness:0.7,
+      emissive: meta.glow, emissiveIntensity:0.15,
+    });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.set(c-3.5, h/2+0.08, r-3.5);
+    body.castShadow = true;
+    body.userData = {type:'piece', r, c, piece:p};
+
+    // Crown/top disc
+    const topGeo = new THREE.CylinderGeometry(rad*0.9, rad*0.7, 0.1, 12);
+    const topMat = new THREE.MeshStandardMaterial({color: meta.glow, emissive: meta.glow, emissiveIntensity:0.8, roughness:0.1, metalness:1});
+    const top = new THREE.Mesh(topGeo, topMat);
+    top.position.set(c-3.5, h+0.13, r-3.5);
+
+    // Base ring
+    const ringGeo = new THREE.TorusGeometry(rad*1.25, 0.06, 8, 16);
+    const ringMat = new THREE.MeshStandardMaterial({color: meta.glow, emissive:meta.glow, emissiveIntensity:0.5});
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI/2;
+    ring.position.set(c-3.5, 0.1, r-3.5);
+
+    vrScene.add(body); vrScene.add(top); vrScene.add(ring);
+    vrPieceMeshes.push(body, top, ring);
+  }
+
+  // Highlight selected & valid targets in VR
+  vrScene.children.forEach(obj => {
+    if (obj.userData.type==='tile') {
+      const r=obj.userData.r, c=obj.userData.c;
+      const light = (r+c)%2===0;
+      if (vrSelected && vrSelected[0]===r && vrSelected[1]===c) {
+        obj.material.emissive.setHex(0xf59e0b); obj.material.emissiveIntensity=0.5;
+      } else if (vrValidTargets.find(([vr,vc])=>vr===r&&vc===c)) {
+        obj.material.emissive.setHex(0x7c3aed); obj.material.emissiveIntensity=0.4;
+      } else {
+        obj.material.emissive.setHex(light?0x1a0030:0x080010); obj.material.emissiveIntensity=1;
+      }
+    }
+  });
+}
+
+function vrClick(e) {
+  if (!vrScene||!vrCamera||animating) return;
+  const canvas = document.getElementById('vr-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const mouse = new THREE.Vector2(
+    ((e.clientX - rect.left) / rect.width)  *  2 - 1,
+    -((e.clientY - rect.top)  / rect.height) * 2 + 1
+  );
+  const ray = new THREE.Raycaster();
+  ray.setFromCamera(mouse, vrCamera);
+
+  // Check tile hits first (for moves)
+  const tiles = vrScene.children.filter(o=>o.userData.type==='tile');
+  const tileHits = ray.intersectObjects(tiles);
+  if (tileHits.length && vrSelected) {
+    const {r,c} = tileHits[0].object.userData;
+    const vm = vrValidTargets.find(([vr,vc])=>vr===r&&vc===c);
+    if (vm) {
+      vrSelected = null; vrValidTargets = [];
+      doMove(vm[2]||vrSelected?.[0]??r, vm[3]||vrSelected?.[1]??c, r, c);
+      // Use a simpler approach: map back to 2D board click
+      return;
+    }
+  }
+
+  // Check piece hits
+  const pieces = vrPieceMeshes.filter(o=>o.userData.type==='piece');
+  const hits = ray.intersectObjects(pieces);
+  if (hits.length) {
+    const {r,c,piece} = hits[0].object.userData;
+    if (piece.c === turn) {
+      vrSelected = [r,c];
+      vrValidTargets = legalMoves(board,r,c).map(([mr,mc])=>[mr,mc,r,c]);
+      vrSyncBoard();
+    } else if (vrSelected && vrValidTargets.find(([vr,vc])=>vr===r&&vc===c)) {
+      doMove(vrSelected[0], vrSelected[1], r, c);
+      vrSelected = null; vrValidTargets = [];
+    }
+  } else if (!tileHits.length) {
+    vrSelected = null; vrValidTargets = []; vrSyncBoard();
+  }
+}
+
+function vrAnimate() {
+  if (!vrOpen) return;
+  vrRenderer.setAnimationLoop(() => {
+    if (!vrOpen) { vrRenderer.setAnimationLoop(null); return; }
+    const x = vrRadius * Math.sin(vrPhi) * Math.sin(vrTheta);
+    const y = vrRadius * Math.cos(vrPhi);
+    const z = vrRadius * Math.sin(vrPhi) * Math.cos(vrTheta);
+    vrCamera.position.set(x, y, z);
+    vrCamera.lookAt(0, 1, 0);
+
+    // Slow auto-rotate when idle
+    vrTheta += 0.0008;
+
+    // Pulse piece tops
+    const t = Date.now()*0.001;
+    vrPieceMeshes.forEach((m,i) => {
+      if (m.userData.type==='piece') m.position.y = TYPE_HEIGHTS[m.userData.piece?.t||'p']/2+0.08 + Math.sin(t*1.5+i*0.7)*0.04;
+    });
+
+    vrRenderer.render(vrScene, vrCamera);
+  });
+}
+
 // ─── Particles ───────────────────────────────────────────────────────────────
 function createParticles() {
   const container = document.getElementById('particles');
