@@ -2303,7 +2303,7 @@ function animate() {
       document.getElementById('boss-bar').style.width=Math.max(0,e.hp/e.maxHp)*100+'%';
     }
 
-    // Witch shoots purple orbs (not while frozen)
+    // Scout Trooper shoots purple orbs (not while frozen)
     if (!frozenEnemies && e.type==='ranger') {
       e.shootTimer-=dt;
       if (dist<20&&e.shootTimer<=0) {
@@ -2314,7 +2314,43 @@ function animate() {
       }
     }
 
-    // Jack-o-lantern spawns ghosts
+    // Stormtrooper fires red blaster bolts (stops to aim)
+    if (!frozenEnemies && e.type==='goon') {
+      e.shootTimer-=dt;
+      if (dist<18 && e.shootTimer<=0) {
+        const d = toPlayer.clone().normalize();
+        // Slight inaccuracy (Stormtrooper aim)
+        d.x += (Math.random()-0.5)*0.18;
+        d.z += (Math.random()-0.5)*0.18;
+        d.normalize();
+        const from = e.mesh.position.clone().add(new THREE.Vector3(0,1.2,0)).add(d.clone().multiplyScalar(1.0));
+        spawnBullet(true, from, d, 20, 1, 0xff4400);
+        // Muzzle flash on enemy
+        const fl = new THREE.Mesh(new THREE.SphereGeometry(0.18,5,5),
+          new THREE.MeshBasicMaterial({color:0xffaa44,transparent:true,opacity:1}));
+        fl.position.copy(from); scene.add(fl);
+        setTimeout(()=>scene.remove(fl), 60);
+        e.shootTimer = 1.4 + Math.random()*0.8;
+      }
+    }
+
+    // Dark Trooper fires slow heavy plasma shots
+    if (!frozenEnemies && e.type==='brute') {
+      e.shootTimer-=dt;
+      if (dist<22 && e.shootTimer<=0) {
+        const d = toPlayer.clone().normalize();
+        const from = e.mesh.position.clone().add(new THREE.Vector3(0,1.8,0)).add(d.clone().multiplyScalar(1.2));
+        spawnBullet(true, from, d, 12, 3, 0x0088ff);
+        // Big glow flash
+        const fl = new THREE.Mesh(new THREE.SphereGeometry(0.3,6,6),
+          new THREE.MeshBasicMaterial({color:0x44aaff,transparent:true,opacity:0.9}));
+        fl.position.copy(from); scene.add(fl);
+        setTimeout(()=>scene.remove(fl), 90);
+        e.shootTimer = 2.5 + Math.random();
+      }
+    }
+
+    // AT-ST spawns ghosts
     if (e.type==='spawner' && !frozenEnemies) {
       e.spawnTimer-=dt;
       if (e.spawnTimer<=0) { spawnEnemy('goon'); e.spawnTimer=4; }
