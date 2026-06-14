@@ -708,9 +708,9 @@ let lukeFlashBase = null; // snapshot taken after build
 
 // ─── GAME STATE ───────────────────────────
 const WEAPONS_DEF = {
-  pistol:   { damage:1, cd:0.25, speed:30, spread:0.04, burst:1, color:0xff4400, ammo:Infinity, label:'BLASTER'  },
-  shotgun:  { damage:1, cd:0.70, speed:22, spread:0.18, burst:6, color:0xff8800, ammo:40,       label:'SCATTER'  },
-  uzi:      { damage:1, cd:0.07, speed:28, spread:0.10, burst:1, color:0x00ffff, ammo:120,      label:'E-11'     },
+  pistol:   { damage:1, cd:0.25, speed:30, spread:0.04, burst:1, color:0xff4400, ammo:Infinity, label:'BLASTER',  melee:false },
+  shotgun:  { damage:1, cd:0.70, speed:22, spread:0.18, burst:6, color:0xff8800, ammo:40,       label:'SCATTER',  melee:false },
+  uzi:      { damage:1, cd:0.07, speed:28, spread:0.10, burst:1, color:0x00ffff, ammo:120,      label:'E-11',     melee:false },
   launcher: { damage:5, cd:1.00, speed:18, spread:0.01, burst:1, color:0xff3300, ammo:10,       label:'TORPEDO'  },
   laser:    { damage:3, cd:0.40, speed:50, spread:0.00, burst:1, color:0x44ff44, ammo:30,       label:'DL-44'    },
 };
