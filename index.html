@@ -450,18 +450,32 @@ function buildMap(waveNum) {
     m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true;
     scene.add(m); mapObjects.push(m);
   }
-  // No box walls — use dense edge rocks for natural boundary
-  const edgeMat = new THREE.MeshStandardMaterial({color:theme.pillar, roughness:0.9});
-  const edgeCount = 36;
-  for (let i=0;i<edgeCount;i++) {
-    const a = (i/edgeCount)*Math.PI*2;
-    const r = ARENA-1+rng(-1,1);
+  // Hull wall panels around the arena perimeter
+  const hullMat = new THREE.MeshStandardMaterial({color:theme.wall, roughness:0.35, metalness:0.7});
+  const accentMat = new THREE.MeshStandardMaterial({color:theme.accentColor||0x00aaff, emissive:theme.accentColor||0x00aaff, emissiveIntensity:0.6, roughness:0.2, metalness:0.8});
+  const panelCount = 40;
+  for (let i=0;i<panelCount;i++) {
+    const a = (i/panelCount)*Math.PI*2;
+    const r = ARENA-0.5;
     const ex = Math.cos(a)*r, ez = Math.sin(a)*r;
-    const s = rng(1.2,3.2);
-    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(s,0), edgeMat.clone());
-    rock.position.set(ex,s*0.4,ez);
-    rock.rotation.set(rng(0,Math.PI),rng(0,Math.PI),rng(0,Math.PI));
-    rock.castShadow=true; scene.add(rock); mapObjects.push(rock);
+    const panelW = rng(2.5,4.5), panelH = rng(2.5,5.0);
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(panelW, panelH, 0.6), hullMat.clone());
+    panel.position.set(ex, panelH/2, ez);
+    panel.rotation.y = -a;
+    panel.castShadow=true; scene.add(panel); mapObjects.push(panel);
+    // Accent stripe on every 3rd panel
+    if (i%3===0) {
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(panelW*0.9, 0.12, 0.08), accentMat.clone());
+      stripe.position.set(ex + Math.cos(a)*0.36, rng(1.2,panelH-0.4), ez + Math.sin(a)*0.36);
+      stripe.rotation.y = -a;
+      scene.add(stripe); mapObjects.push(stripe);
+      // Small point light on accent stripe
+      if (i%6===0) {
+        const pl = new THREE.PointLight(theme.accentColor||0x00aaff, 1.2, 8);
+        pl.position.set(ex*0.85, rng(1,3), ez*0.85);
+        scene.add(pl); mapObjects.push(pl);
+      }
+    }
   }
 
   // Obstacle set
