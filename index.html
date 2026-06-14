@@ -2074,7 +2074,7 @@ function killEnemy(i) {
   document.getElementById('s-kills').textContent = kills;
   if (bloodlust) { hp = Math.min(maxHp, hp+1); updateHpBar(); }
   const roll = Math.random();
-  if      (roll < 0.12) dropPickup(e.mesh.position,'weapon', Object.keys(WEAPONS_DEF).filter(w=>w!=='pistol')[Math.floor(Math.random()*4)]);
+  if      (roll < 0.12) dropPickup(e.mesh.position,'weapon', Object.keys(WEAPONS_DEF).filter(w=>w!=='pistol')[Math.floor(Math.random()*(Object.keys(WEAPONS_DEF).length-1))]);
   else if (roll < 0.30) dropPickup(e.mesh.position,'health');
   else if (roll < 0.50) dropPickup(e.mesh.position,'ammo');
   scene.remove(e.mesh); enemies.splice(i, 1);
