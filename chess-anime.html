@@ -937,6 +937,266 @@ function logAndFinish(fr, fc, tr, tc, promo, capturedPiece) {
   checkGameOver();
 }
 
+// ─── Sound engine (Web Audio API) ────────────────────────────────────────────
+const AC = new (window.AudioContext || window.webkitAudioContext)();
+
+function beep(freq, type, vol, dur, startDelay=0, freqEnd=null) {
+  const o = AC.createOscillator();
+  const g = AC.createGain();
+  o.connect(g); g.connect(AC.destination);
+  o.type = type;
+  o.frequency.setValueAtTime(freq, AC.currentTime + startDelay);
+  if (freqEnd) o.frequency.linearRampToValueAtTime(freqEnd, AC.currentTime + startDelay + dur);
+  g.gain.setValueAtTime(vol, AC.currentTime + startDelay);
+  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + startDelay + dur);
+  o.start(AC.currentTime + startDelay);
+  o.stop(AC.currentTime + startDelay + dur);
+}
+
+function noise(vol, dur, startDelay=0) {
+  const buf = AC.createBuffer(1, AC.sampleRate * dur, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  const src = AC.createBufferSource();
+  src.buffer = buf;
+  const g = AC.createGain();
+  src.connect(g); g.connect(AC.destination);
+  g.gain.setValueAtTime(vol, AC.currentTime + startDelay);
+  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + startDelay + dur);
+  src.start(AC.currentTime + startDelay);
+}
+
+function soundJump() {
+  // Pokémon move whoosh: rising tone
+  beep(200, 'sine', 0.18, 0.08);
+  beep(400, 'sine', 0.12, 0.1, 0.05);
+  beep(600, 'triangle', 0.08, 0.08, 0.12);
+}
+
+function soundLand() {
+  // Thud + tiny chime
+  beep(80, 'sine', 0.25, 0.12);
+  noise(0.06, 0.08);
+  beep(880, 'sine', 0.06, 0.1, 0.04);
+}
+
+function soundAttack() {
+  // Pokémon attack: sharp hit + rumble
+  beep(150, 'sawtooth', 0.3, 0.06);
+  noise(0.2, 0.15, 0.03);
+  beep(60, 'sine', 0.4, 0.2, 0.05);
+  beep(300, 'square', 0.1, 0.08, 0.08, 80);
+}
+
+function soundFaint() {
+  // Descending faint cry
+  beep(440, 'sine', 0.2, 0.4, 0, 80);
+  beep(300, 'triangle', 0.12, 0.3, 0.1, 60);
+  noise(0.08, 0.3, 0.15);
+}
+
+function soundCheck() {
+  beep(880, 'square', 0.15, 0.08);
+  beep(1100, 'square', 0.12, 0.08, 0.1);
+  beep(660, 'sawtooth', 0.1, 0.2, 0.2);
+}
+
+function soundVictory() {
+  const notes = [523,659,784,1047];
+  notes.forEach((f,i) => beep(f,'square',0.15,0.18,i*0.16));
+}
+
+// Resume audio context on first interaction
+document.addEventListener('click', () => { if(AC.state==='suspended') AC.resume(); }, {once:true});
+
+// ─── Cell element helper ──────────────────────────────────────────────────────
+function getCellEl(r, c) {
+  return document.querySelector(`#board .cell[data-r="${r}"][data-c="${c}"]`);
+}
+
+function getCellCenter(r, c) {
+  const el = getCellEl(r, c);
+  if (!el) return {x:0,y:0};
+  const rect = el.getBoundingClientRect();
+  return { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
+}
+
+// ─── Screen flash ─────────────────────────────────────────────────────────────
+function screenFlash(color) {
+  const fl = document.createElement('div');
+  fl.style.cssText = `position:fixed;inset:0;background:${color};pointer-events:none;z-index:9999;animation:flashOut 0.35s ease-out forwards`;
+  document.body.appendChild(fl);
+  fl.addEventListener('animationend', () => fl.remove());
+}
+
+// ─── Pokémon faint animation ───────────────────────────────────────────────────
+function pokeFaint(cell, done) {
+  if (!cell) { done(); return; }
+  const piece = cell.querySelector('.piece');
+  if (!piece) { done(); return; }
+  soundFaint();
+
+  // Phase 1: shake & flash white like HP draining
+  piece.animate([
+    {transform:'translate(0,0) rotate(0deg)', filter:'brightness(1)'},
+    {transform:'translate(-6px,0) rotate(-8deg)', filter:'brightness(3) saturate(0)'},
+    {transform:'translate(6px,0) rotate(8deg)',  filter:'brightness(3) saturate(0)'},
+    {transform:'translate(-4px,0) rotate(-5deg)', filter:'brightness(5) saturate(0)'},
+    {transform:'translate(4px,0) rotate(5deg)',  filter:'brightness(5) saturate(0)'},
+    {transform:'translate(0,0) rotate(0deg)',    filter:'brightness(1)'},
+  ], {duration:300, easing:'ease-in-out'});
+
+  // Phase 2: fall & fade like a Pokémon fainting
+  setTimeout(() => {
+    burstStars(cell);
+    piece.animate([
+      {transform:'translateY(0) rotate(0deg) scale(1)', opacity:1},
+      {transform:'translateY(0) rotate(-15deg) scale(1.2)', opacity:0.8, offset:0.2},
+      {transform:'translateY(20px) rotate(-30deg) scale(0.8)', opacity:0.5, offset:0.6},
+      {transform:'translateY(50px) rotate(-90deg) scale(0.2)', opacity:0},
+    ], {duration:450, easing:'ease-in', fill:'forwards'}).onfinish = () => done();
+  }, 310);
+}
+
+// ─── Jump arc animation (flying piece overlay) ────────────────────────────────
+function animatePieceJump(fr, fc, tr, tc, done) {
+  const fromCenter = getCellCenter(fr, fc);
+  const toCenter   = getCellCenter(tr, tc);
+
+  const fromCell = getCellEl(fr, fc);
+  const piece = fromCell ? fromCell.querySelector('.piece') : null;
+  if (!piece) { done(); return; }
+
+  // Create a ghost piece that flies over everything
+  const ghost = document.createElement('div');
+  ghost.textContent = piece.textContent;
+  ghost.className = piece.className;
+  ghost.style.cssText = `
+    position:fixed;
+    left:${fromCenter.x}px; top:${fromCenter.y}px;
+    transform:translate(-50%,-50%);
+    font-size:clamp(1.6rem,3.5vw,2.4rem);
+    pointer-events:none;
+    z-index:5000;
+    line-height:1;
+  `;
+  document.body.appendChild(ghost);
+
+  // Temporarily hide the real piece
+  if (piece) piece.style.opacity = '0';
+
+  const dx = toCenter.x - fromCenter.x;
+  const dy = toCenter.y - fromCenter.y;
+  const dist = Math.sqrt(dx*dx+dy*dy);
+  const arcHeight = Math.min(dist * 0.7, 120);
+  const dur = Math.max(300, Math.min(dist * 1.5, 600));
+
+  ghost.animate([
+    { left: `${fromCenter.x}px`, top: `${fromCenter.y}px`, transform:'translate(-50%,-50%) scale(1) rotate(0deg)',   filter:'drop-shadow(0 0 4px #a855f7)' },
+    { left: `${fromCenter.x + dx*0.5}px`, top: `${fromCenter.y + dy*0.5 - arcHeight}px`, transform:'translate(-50%,-50%) scale(1.35) rotate(180deg)', filter:'drop-shadow(0 0 16px #f59e0b) brightness(1.5)' },
+    { left: `${toCenter.x}px`,   top: `${toCenter.y}px`,   transform:'translate(-50%,-50%) scale(1) rotate(360deg)', filter:'drop-shadow(0 0 4px #a855f7)' },
+  ], { duration: dur, easing:'cubic-bezier(0.25,0,0.5,1)', fill:'forwards' })
+  .onfinish = () => {
+    ghost.remove();
+    done();
+  };
+
+  // Trail sparkles along the arc
+  for (let i=1;i<=5;i++) {
+    setTimeout(() => {
+      const t = i/6;
+      const cx = fromCenter.x + dx*t;
+      const cy = fromCenter.y + dy*t - arcHeight * Math.sin(Math.PI*t);
+      sparkAt(cx, cy, '#f59e0b');
+    }, (dur/6)*i);
+  }
+}
+
+// ─── Burst particles on capture ───────────────────────────────────────────────
+function burstParticles(r, c, color) {
+  const {x, y} = getCellCenter(r, c);
+  for (let i=0;i<18;i++) {
+    const p = document.createElement('div');
+    const angle = (i/18)*Math.PI*2;
+    const speed = 60 + Math.random()*80;
+    const size = 4 + Math.random()*6;
+    p.style.cssText = `
+      position:fixed; left:${x}px; top:${y}px;
+      width:${size}px; height:${size}px;
+      background:${color};
+      border-radius:${Math.random()>0.5?'50%':'2px'};
+      pointer-events:none; z-index:6000;
+      transform:translate(-50%,-50%);
+      box-shadow:0 0 6px ${color};
+    `;
+    document.body.appendChild(p);
+    const ex = Math.cos(angle)*speed;
+    const ey = Math.sin(angle)*speed;
+    p.animate([
+      {transform:`translate(-50%,-50%) scale(1)`,   opacity:1},
+      {transform:`translate(calc(-50% + ${ex}px), calc(-50% + ${ey}px)) scale(0)`, opacity:0},
+    ], {duration:500+Math.random()*300, easing:'ease-out', fill:'forwards'})
+    .onfinish = () => p.remove();
+  }
+}
+
+function burstStars(cell) {
+  const rect = cell.getBoundingClientRect();
+  const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+  ['⭐','💥','✨','⚡','💫'].forEach((em, i) => {
+    const s = document.createElement('div');
+    s.textContent = em;
+    const angle = (i/5)*Math.PI*2;
+    s.style.cssText = `
+      position:fixed; left:${cx}px; top:${cy}px;
+      font-size:1.4rem; pointer-events:none; z-index:6001;
+      transform:translate(-50%,-50%);
+    `;
+    document.body.appendChild(s);
+    const ex = Math.cos(angle)*55, ey = Math.sin(angle)*55;
+    s.animate([
+      {transform:`translate(-50%,-50%) scale(0.5)`, opacity:1},
+      {transform:`translate(calc(-50% + ${ex}px), calc(-50% + ${ey}px)) scale(1.5)`, opacity:0},
+    ], {duration:500, easing:'ease-out', delay:i*40, fill:'forwards'})
+    .onfinish = () => s.remove();
+  });
+}
+
+function sparkAt(x, y, color) {
+  const s = document.createElement('div');
+  s.style.cssText = `
+    position:fixed; left:${x}px; top:${y}px;
+    width:6px; height:6px; border-radius:50%;
+    background:${color}; pointer-events:none; z-index:5001;
+    transform:translate(-50%,-50%);
+    box-shadow:0 0 8px ${color};
+  `;
+  document.body.appendChild(s);
+  s.animate([{opacity:1, transform:'translate(-50%,-50%) scale(1)'},{opacity:0, transform:'translate(-50%,-50%) scale(0)'}],
+    {duration:300, fill:'forwards'}).onfinish = () => s.remove();
+}
+
+// ─── Damage number popup ──────────────────────────────────────────────────────
+function spawnDamageText(r, c, text) {
+  const {x, y} = getCellCenter(r, c);
+  const el = document.createElement('div');
+  el.textContent = text;
+  el.style.cssText = `
+    position:fixed; left:${x}px; top:${y}px;
+    font-family:'Orbitron',sans-serif; font-size:1.5rem; font-weight:900;
+    color:#ff4444; text-shadow:0 0 10px #ff0000, 0 2px 0 #000;
+    pointer-events:none; z-index:7000;
+    transform:translate(-50%,-50%);
+    white-space:nowrap;
+  `;
+  document.body.appendChild(el);
+  el.animate([
+    {transform:'translate(-50%,-50%) scale(0.5)', opacity:1},
+    {transform:'translate(-50%,-120%) scale(1.4)', opacity:1, offset:0.3},
+    {transform:'translate(-50%,-200%) scale(1)',   opacity:0},
+  ], {duration:900, easing:'ease-out', fill:'forwards'}).onfinish = () => el.remove();
+}
+
 // ─── Check game over ─────────────────────────────────────────────────────────
 function checkGameOver() {
   if (!hasLegalMoves(board, turn)) {
