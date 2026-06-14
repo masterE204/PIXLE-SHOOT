@@ -757,103 +757,122 @@
         <div class="card-corner cc-br"></div>
         <!-- CRASH SITE: Alien wasteland with downed space shuttle -->
         <div class="card-thumb" style="background:none;padding:0;">
+          <!-- LEVEL 1: Crashed shuttle on alien crater world, blood-red storm sky -->
           <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
             <defs>
-              <radialGradient id="sun1" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="#fff7cc"/>
-                <stop offset="40%" stop-color="#ffcc44"/>
-                <stop offset="100%" stop-color="#ff8800" stop-opacity="0"/>
-              </radialGradient>
-              <radialGradient id="sun2" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="#fff0aa"/>
-                <stop offset="40%" stop-color="#ffaa22"/>
-                <stop offset="100%" stop-color="#ff6600" stop-opacity="0"/>
-              </radialGradient>
-              <linearGradient id="tato-sky" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#1a0a00"/>
-                <stop offset="40%" stop-color="#4a1800"/>
-                <stop offset="75%" stop-color="#c24a00"/>
-                <stop offset="100%" stop-color="#e87020"/>
+              <linearGradient id="c1-sky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0d0005"/>
+                <stop offset="35%" stop-color="#2a0010"/>
+                <stop offset="70%" stop-color="#6b0820"/>
+                <stop offset="100%" stop-color="#9a1430"/>
               </linearGradient>
-              <linearGradient id="tato-sand" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#c8853a"/>
-                <stop offset="100%" stop-color="#6b3a10"/>
+              <linearGradient id="c1-ground" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#2a1a1a"/>
+                <stop offset="100%" stop-color="#0f0808"/>
               </linearGradient>
-              <filter id="glow-sun">
-                <feGaussianBlur stdDeviation="4" result="blur"/>
-                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-              </filter>
-              <clipPath id="thumb-clip1"><rect width="400" height="200" rx="0"/></clipPath>
+              <radialGradient id="c1-fire" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ffdd00"/>
+                <stop offset="40%" stop-color="#ff6600"/>
+                <stop offset="100%" stop-color="#ff2200" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="c1-crater1" cx="50%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#1a0a0a"/>
+                <stop offset="100%" stop-color="#2e1010"/>
+              </radialGradient>
+              <filter id="c1-glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="c1-softglow"><feGaussianBlur stdDeviation="6"/></filter>
+              <clipPath id="c1-clip"><rect width="400" height="200"/></clipPath>
             </defs>
-            <g clip-path="url(#thumb-clip1)">
-              <!-- sky -->
-              <rect width="400" height="200" fill="url(#tato-sky)"/>
-              <!-- stars -->
-              <circle cx="30" cy="20" r="0.8" fill="#fff" opacity="0.7"/>
-              <circle cx="80" cy="10" r="0.6" fill="#fff" opacity="0.5"/>
-              <circle cx="140" cy="25" r="0.9" fill="#fff" opacity="0.6"/>
-              <circle cx="200" cy="8" r="0.7" fill="#fff" opacity="0.8"/>
-              <circle cx="260" cy="18" r="0.6" fill="#fff" opacity="0.5"/>
-              <circle cx="320" cy="12" r="0.8" fill="#fff" opacity="0.7"/>
-              <circle cx="370" cy="22" r="0.6" fill="#fff" opacity="0.6"/>
-              <circle cx="55" cy="40" r="0.5" fill="#fff" opacity="0.4"/>
-              <circle cx="170" cy="45" r="0.5" fill="#fff" opacity="0.4"/>
-              <circle cx="340" cy="38" r="0.5" fill="#fff" opacity="0.4"/>
-              <!-- twin suns glow halos -->
-              <circle cx="110" cy="70" r="38" fill="url(#sun1)" opacity="0.5"/>
-              <circle cx="155" cy="58" r="30" fill="url(#sun2)" opacity="0.45"/>
-              <!-- twin suns -->
-              <circle cx="110" cy="70" r="18" fill="#ffdd66" filter="url(#glow-sun)"/>
-              <circle cx="155" cy="58" r="13" fill="#ffcc44" filter="url(#glow-sun)"/>
-              <!-- atmosphere glow on horizon -->
-              <ellipse cx="200" cy="142" rx="260" ry="40" fill="#ff7722" opacity="0.18"/>
-              <!-- sand dunes -->
-              <ellipse cx="-20" cy="180" rx="120" ry="55" fill="#b06828"/>
-              <ellipse cx="100" cy="175" rx="130" ry="45" fill="#c87830"/>
-              <ellipse cx="260" cy="178" rx="150" ry="50" fill="#b86020"/>
-              <ellipse cx="430" cy="172" rx="110" ry="48" fill="#a05018"/>
-              <!-- sand ground -->
-              <rect x="0" y="158" width="400" height="42" fill="url(#tato-sand)"/>
-              <!-- dune ridge highlights -->
-              <path d="M0,158 Q60,148 120,158 Q180,168 250,152 Q310,140 400,155" fill="none" stroke="#e8993a" stroke-width="1.5" opacity="0.6"/>
-              <!-- AT-AT walker silhouette -->
-              <!-- body -->
-              <rect x="268" y="108" width="52" height="30" rx="4" fill="#1a0e04"/>
-              <!-- head -->
-              <rect x="278" y="96" width="32" height="18" rx="3" fill="#1a0e04"/>
-              <!-- head cannons -->
-              <rect x="275" y="101" width="14" height="3" rx="1" fill="#0a0602"/>
-              <rect x="275" y="107" width="14" height="3" rx="1" fill="#0a0602"/>
-              <!-- neck -->
-              <rect x="287" y="108" width="8" height="6" fill="#150b03"/>
-              <!-- legs -->
-              <line x1="278" y1="138" x2="268" y2="158" stroke="#1a0e04" stroke-width="5" stroke-linecap="round"/>
-              <line x1="290" y1="138" x2="282" y2="158" stroke="#1a0e04" stroke-width="5" stroke-linecap="round"/>
-              <line x1="302" y1="138" x2="308" y2="158" stroke="#1a0e04" stroke-width="5" stroke-linecap="round"/>
-              <line x1="314" y1="138" x2="322" y2="158" stroke="#1a0e04" stroke-width="5" stroke-linecap="round"/>
-              <!-- feet -->
-              <rect x="260" y="155" width="18" height="6" rx="2" fill="#1a0e04"/>
-              <rect x="275" y="155" width="16" height="6" rx="2" fill="#1a0e04"/>
-              <rect x="302" y="155" width="16" height="6" rx="2" fill="#1a0e04"/>
-              <rect x="316" y="155" width="18" height="6" rx="2" fill="#1a0e04"/>
-              <!-- second AT-AT (distant, smaller) -->
-              <rect x="68" y="128" width="30" height="17" rx="3" fill="#150b03" opacity="0.8"/>
-              <rect x="74" y="121" width="18" height="10" rx="2" fill="#150b03" opacity="0.8"/>
-              <line x1="74" y1="145" x2="68" y2="158" stroke="#150b03" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
-              <line x1="82" y1="145" x2="78" y2="158" stroke="#150b03" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
-              <line x1="90" y1="145" x2="94" y2="158" stroke="#150b03" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
-              <line x1="98" y1="145" x2="103" y2="158" stroke="#150b03" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
-              <!-- laser bolt from AT-AT -->
-              <line x1="264" y1="103" x2="230" y2="118" stroke="#ff4400" stroke-width="2" opacity="0.85"/>
-              <line x1="264" y1="103" x2="230" y2="118" stroke="#ffaa44" stroke-width="0.8" opacity="0.7"/>
-              <!-- dust cloud at impact -->
-              <ellipse cx="228" cy="120" rx="12" ry="6" fill="#cc6600" opacity="0.5"/>
-              <!-- small figures (rebels) silhouettes -->
-              <rect x="190" y="150" width="3" height="8" rx="1" fill="#0a0602"/>
-              <rect x="200" y="148" width="3" height="8" rx="1" fill="#0a0602"/>
-              <rect x="210" y="151" width="3" height="7" rx="1" fill="#0a0602"/>
+            <g clip-path="url(#c1-clip)">
+              <!-- stormy sky -->
+              <rect width="400" height="200" fill="url(#c1-sky)"/>
+              <!-- storm cloud layers -->
+              <ellipse cx="60"  cy="18" rx="100" ry="22" fill="#1a0010" opacity="0.85"/>
+              <ellipse cx="200" cy="10" rx="140" ry="18" fill="#220010" opacity="0.8"/>
+              <ellipse cx="340" cy="22" rx="110" ry="20" fill="#1a0008" opacity="0.85"/>
+              <ellipse cx="130" cy="35" rx="90"  ry="16" fill="#150008" opacity="0.6"/>
+              <ellipse cx="300" cy="40" rx="100" ry="14" fill="#1a000c" opacity="0.6"/>
+              <!-- lightning bolt left -->
+              <polyline points="55,5 48,30 58,30 44,60" fill="none" stroke="#ffaacc" stroke-width="1.2" opacity="0.6"/>
+              <!-- lightning bolt right -->
+              <polyline points="340,8 335,28 344,26 330,55" fill="none" stroke="#ffaacc" stroke-width="1" opacity="0.4"/>
+              <!-- distant alien mountains, jagged -->
+              <polygon points="0,130 25,88 50,115 75,72 105,108 130,65 160,105 190,78 220,112 250,60 280,100 310,70 340,102 370,68 400,95 400,145 0,145" fill="#1e0810" opacity="0.95"/>
+              <!-- mountain ridge highlight -->
+              <polyline points="0,130 25,88 50,115 75,72 105,108 130,65 160,105 190,78 220,112 250,60 280,100 310,70 340,102 370,68 400,95" fill="none" stroke="#5a1030" stroke-width="1" opacity="0.5"/>
+              <!-- craters on ground -->
+              <ellipse cx="80"  cy="170" rx="45" ry="14" fill="#1a0808"/>
+              <ellipse cx="80"  cy="170" rx="38" ry="10" fill="url(#c1-crater1)"/>
+              <ellipse cx="80"  cy="170" rx="38" ry="10" fill="none" stroke="#3a1010" stroke-width="1.5"/>
+              <ellipse cx="310" cy="175" rx="40" ry="12" fill="#1a0808"/>
+              <ellipse cx="310" cy="175" rx="33" ry="8"  fill="url(#c1-crater1)"/>
+              <ellipse cx="310" cy="175" rx="33" ry="8"  fill="none" stroke="#3a1010" stroke-width="1.5"/>
+              <!-- small craters -->
+              <ellipse cx="200" cy="180" rx="18" ry="6"  fill="#160606"/>
+              <ellipse cx="150" cy="168" rx="10" ry="3.5" fill="#160606"/>
+              <ellipse cx="355" cy="160" rx="8"  ry="3"  fill="#160606"/>
+              <!-- alien ground surface -->
+              <rect x="0" y="155" width="400" height="45" fill="url(#c1-ground)"/>
+              <!-- rocky ground texture lines -->
+              <path d="M0,162 Q50,158 100,163 Q160,168 220,160 Q280,154 340,162 Q370,166 400,160" fill="none" stroke="#3a1515" stroke-width="0.8" opacity="0.6"/>
+              <path d="M0,172 Q70,168 140,174 Q200,178 260,170 Q320,164 400,172" fill="none" stroke="#2a1010" stroke-width="0.8" opacity="0.5"/>
+              <!-- scattered rocks -->
+              <ellipse cx="130" cy="158" rx="8"  ry="4"  fill="#2e1212"/>
+              <ellipse cx="260" cy="162" rx="10" ry="5"  fill="#2a1010"/>
+              <ellipse cx="50"  cy="160" rx="6"  ry="3"  fill="#2e1414"/>
+              <ellipse cx="370" cy="157" rx="7"  ry="3.5" fill="#2e1212"/>
+              <!-- CRASHED SPACE SHUTTLE — main fuselage -->
+              <g transform="translate(185,118) rotate(-22)">
+                <!-- engine bell (left rear) -->
+                <ellipse cx="-62" cy="6" rx="8" ry="5" fill="#222" stroke="#444" stroke-width="0.8"/>
+                <ellipse cx="-62" cy="6" rx="5" ry="3" fill="#111"/>
+                <!-- engine bell (right rear) -->
+                <ellipse cx="-62" cy="-6" rx="8" ry="5" fill="#222" stroke="#444" stroke-width="0.8"/>
+                <ellipse cx="-62" cy="-6" rx="5" ry="3" fill="#111"/>
+                <!-- main fuselage body -->
+                <path d="M-58,-10 L50,-8 Q70,-6 76,0 Q70,6 50,8 L-58,10 Z" fill="#cccccc"/>
+                <!-- fuselage shading -->
+                <path d="M-58,-10 L50,-8 Q70,-6 76,0 L50,-8 L-58,-10 Z" fill="#e8e8e8" opacity="0.5"/>
+                <path d="M-58,10 L50,8 Q70,6 76,0 L50,8 L-58,10 Z" fill="#aaaaaa" opacity="0.5"/>
+                <!-- nose cone -->
+                <path d="M50,-8 Q70,-6 76,0 Q70,6 50,8 Z" fill="#bbbbbb"/>
+                <!-- cockpit windows -->
+                <rect x="30" y="-5" width="16" height="8" rx="2" fill="#334466" stroke="#556688" stroke-width="0.5"/>
+                <rect x="32" y="-4" width="6" height="6" rx="1" fill="#223355" opacity="0.8"/>
+                <rect x="40" y="-4" width="5" height="6" rx="1" fill="#223355" opacity="0.8"/>
+                <!-- payload bay doors (hanging open/broken) -->
+                <rect x="-20" y="-10" width="40" height="4" rx="1" fill="#bbbbbb" stroke="#999" stroke-width="0.5"/>
+                <rect x="-20" y="-10" width="40" height="4" rx="1" fill="none" stroke="#aaa" stroke-width="0.3" opacity="0.5"/>
+                <!-- wing (delta, left side visible) -->
+                <path d="M-40,10 L20,10 L-10,38 Z" fill="#aaaaaa" stroke="#888" stroke-width="0.5"/>
+                <!-- wing shadow -->
+                <path d="M-40,10 L20,10 L-10,38 Z" fill="#000" opacity="0.18"/>
+                <!-- vertical stabilizer (snapped) -->
+                <path d="M-30,-10 L-10,-10 L-18,-28 Z" fill="#bbbbbb" stroke="#999" stroke-width="0.5"/>
+                <!-- damage crack lines -->
+                <line x1="-10" y1="-8" x2="5"  y2="0"  stroke="#888" stroke-width="0.7" opacity="0.7"/>
+                <line x1="10"  y1="-8" x2="20" y2="2"  stroke="#888" stroke-width="0.7" opacity="0.6"/>
+              </g>
+              <!-- fire & smoke at engine -->
+              <circle cx="115" cy="128" r="22" fill="url(#c1-fire)" opacity="0.7" filter="url(#c1-softglow)"/>
+              <circle cx="115" cy="128" r="12" fill="#ffcc00" opacity="0.6" filter="url(#c1-glow)"/>
+              <circle cx="115" cy="128" r="6"  fill="#ffffff" opacity="0.5"/>
+              <!-- smoke plumes -->
+              <ellipse cx="105" cy="108" rx="14" ry="20" fill="#1a0808" opacity="0.7"/>
+              <ellipse cx="98"  cy="90"  rx="18" ry="22" fill="#150606" opacity="0.55"/>
+              <ellipse cx="90"  cy="70"  rx="22" ry="24" fill="#110404" opacity="0.4"/>
+              <ellipse cx="82"  cy="50"  rx="20" ry="20" fill="#0e0404" opacity="0.3"/>
+              <!-- debris field -->
+              <rect x="240" y="148" width="18" height="5" rx="1" fill="#aaa" transform="rotate(-30,240,148)"/>
+              <rect x="270" y="155" width="12" height="4" rx="1" fill="#bbb" transform="rotate(15,270,155)"/>
+              <rect x="160" y="152" width="9"  height="3" rx="1" fill="#999" transform="rotate(-10,160,152)"/>
+              <circle cx="255" cy="145" r="3" fill="#cc4400" opacity="0.8"/>
+              <circle cx="280" cy="150" r="2" fill="#ff6600" opacity="0.7"/>
+              <circle cx="230" cy="158" r="2.5" fill="#cc3300" opacity="0.7"/>
+              <!-- red atmospheric glow above horizon -->
+              <ellipse cx="200" cy="145" rx="260" ry="30" fill="#aa1830" opacity="0.12" filter="url(#c1-softglow)"/>
               <!-- label -->
-              <text x="8" y="194" font-family="monospace" font-size="8" fill="#ff8822" opacity="0.8" letter-spacing="2">TATOOINE</text>
+              <text x="8" y="194" font-family="monospace" font-size="8" fill="#ff4466" opacity="0.85" letter-spacing="2">CRASH SITE · LV-426</text>
             </g>
           </svg>
         </div>
