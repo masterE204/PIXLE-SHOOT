@@ -259,23 +259,57 @@
     box-shadow: inset 0 0 15px rgba(245,158,11,0.4);
   }
 
+  /* Pokéball valid-move marker */
   .cell.valid-move::after {
     content: '';
     position: absolute;
-    width: 28%;
-    height: 28%;
-    background: rgba(168,85,247,0.7);
+    width: 38%;
+    height: 38%;
     border-radius: 50%;
-    box-shadow: 0 0 10px #a855f7;
+    background:
+      /* center band */
+      linear-gradient(to bottom,
+        #cc0000 0%, #cc0000 42%,
+        #111 42%, #111 58%,
+        #f0f0f0 58%, #f0f0f0 100%);
+    border: 2px solid #111;
+    box-shadow: 0 0 10px rgba(200,0,0,0.6), 0 0 4px #fff4;
+    animation: pokeBounce 0.8s ease-in-out infinite alternate;
+  }
+  /* center button */
+  .cell.valid-move::before {
+    content: '';
+    position: absolute;
+    width: 11%;
+    height: 11%;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #111;
+    z-index: 3;
+    box-shadow: 0 0 4px #fff8;
+  }
+  @keyframes pokeBounce {
+    from { transform: scale(0.85) translateY(2px); }
+    to   { transform: scale(1.05) translateY(-2px); }
   }
 
+  /* Pokéball capture ring */
   .cell.valid-capture::after {
     content: '';
     position: absolute;
-    inset: 3px;
-    border: 3px solid rgba(236,72,153,0.8);
-    border-radius: 4px;
-    box-shadow: inset 0 0 10px rgba(236,72,153,0.3);
+    inset: 4px;
+    border-radius: 50%;
+    background: transparent;
+    border: 4px solid #cc0000;
+    box-shadow:
+      0 0 0 2px #111,
+      0 0 12px rgba(200,0,0,0.7),
+      inset 0 0 8px rgba(200,0,0,0.4);
+    animation: pokeCapturePulse 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes pokeCapturePulse {
+    from { border-color: #cc0000; box-shadow: 0 0 0 2px #111, 0 0 8px rgba(200,0,0,0.5), inset 0 0 4px rgba(200,0,0,0.3); }
+    to   { border-color: #ff4444; box-shadow: 0 0 0 2px #111, 0 0 18px rgba(255,50,50,0.9), inset 0 0 10px rgba(255,50,50,0.5); }
   }
 
   .cell.last-move {
