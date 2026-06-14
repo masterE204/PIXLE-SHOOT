@@ -904,17 +904,33 @@ playerGroup.position.set(0,0,0);
   shadow.rotation.x=-Math.PI/2; shadow.position.y=0.01; g.add(shadow);
 })();
 
-// Reference to torso for iframe flash (third child = tunic torso)
-const bodyMesh = { material: { color: { set: ()=>{} } } }; // stub — Luke uses traverse
-function setLukeColor(col) {
-  playerGroup.traverse(c => { if (c.isMesh) {
-    const h = c.material.color?.getHex?.();
-    // Only tint skin+tunic meshes, skip saber/hilt/shadow
-    if (h && h !== 0x55aaff && h !== 0x888888 && h !== 0x000000)
-      c.material.color.set(col);
-  }});
+// Snapshot Luke's emissive state so hit flash can pulse red without touching base colors
+const lukeMats = [];
+playerGroup.traverse(c => {
+  if (c.isMesh && c.material && c.material.color) {
+    // Clone material per mesh so emissive changes don't bleed across shared mats
+    c.material = c.material.clone();
+    lukeMats.push({ mat: c.material, origEmissive: c.material.emissive.getHex(), origEI: c.material.emissiveIntensity||0 });
+  }
+});
+// Red hit-glow light attached to player (activated on damage)
+const lukeHitLight = new THREE.PointLight(0xff2200, 0, 5);
+lukeHitLight.position.set(0, 1.5, 0);
+playerGroup.add(lukeHitLight);
+
+function setLukeHitFlash(intensity) {
+  // intensity 0–1: 0 = normal, 1 = full red emissive pulse
+  for (const { mat, origEmissive, origEI } of lukeMats) {
+    if (intensity > 0) {
+      mat.emissive.setHex(0xff2200);
+      mat.emissiveIntensity = intensity * 0.9;
+    } else {
+      mat.emissive.setHex(origEmissive);
+      mat.emissiveIntensity = origEI;
+    }
+  }
+  lukeHitLight.intensity = intensity * 4.0;
 }
-let lukeFlashBase = null; // snapshot taken after build
 
 // ─── GAME STATE ───────────────────────────
 const WEAPONS_DEF = {
