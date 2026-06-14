@@ -569,6 +569,76 @@ function buildMap(waveNum) {
       gl.position.y=0.5; g.add(gl);
       g.position.set(px,0,pz);
       scene.add(g); mapObjects.push(g); continue;
+
+    } else if (theme.obstacles==='consoles') {
+      // Imperial control console — desk + screens + blinking lights
+      const g = new THREE.Group();
+      const acc = theme.accentColor||0x00aaff;
+      const desk = new THREE.Mesh(new THREE.BoxGeometry(rng(1.4,2.4),0.9,rng(0.8,1.2)),
+        new THREE.MeshStandardMaterial({color:theme.pillar,roughness:0.4,metalness:0.6}));
+      desk.position.y=0.45; g.add(desk);
+      // Screen panel
+      const screen = new THREE.Mesh(new THREE.BoxGeometry(rng(1.0,1.8),rng(0.5,0.9),0.07),
+        new THREE.MeshStandardMaterial({color:acc,emissive:acc,emissiveIntensity:0.55,roughness:0.1}));
+      screen.position.set(0,1.15,0); screen.rotation.x=-0.25; g.add(screen);
+      // Indicator lights row
+      const lightColors=[0xff0000,0x00ff00,0xffff00,0x00aaff];
+      for(let l=0;l<4;l++){
+        const lc=lightColors[l%lightColors.length];
+        const btn=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.09,0.06),
+          new THREE.MeshStandardMaterial({color:lc,emissive:lc,emissiveIntensity:1.4}));
+        btn.position.set(-0.2+l*0.14,0.92,0.46); g.add(btn);
+      }
+      // Glow light from screen
+      const gl=new THREE.PointLight(acc,1.0,5);
+      gl.position.set(0,1.4,0.3); g.add(gl);
+      g.position.set(px,0,pz);
+      g.rotation.y=rng(0,Math.PI*2);
+      scene.add(g); mapObjects.push(g); continue;
+
+    } else if (theme.obstacles==='crates') {
+      // Imperial cargo crates — stacked metal boxes
+      const g = new THREE.Group();
+      const acc = theme.accentColor||0xffcc00;
+      const stack = Math.floor(rng(1,3));
+      for(let s=0;s<stack;s++){
+        const w=rng(0.8,1.6), d=rng(0.8,1.4), h=rng(0.7,1.1);
+        const crate=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),
+          new THREE.MeshStandardMaterial({color:theme.pillar,roughness:0.5,metalness:0.5}));
+        crate.position.set(rng(-0.2,0.2), h/2+s*1.1, rng(-0.2,0.2)); g.add(crate);
+        // Edge banding
+        const band=new THREE.Mesh(new THREE.BoxGeometry(w+0.02,0.06,d+0.02),
+          new THREE.MeshStandardMaterial({color:acc,emissive:acc,emissiveIntensity:0.4,roughness:0.3,metalness:0.8}));
+        band.position.set(rng(-0.2,0.2), h/2+s*1.1, rng(-0.2,0.2)); g.add(band);
+      }
+      g.position.set(px,0,pz);
+      g.rotation.y=rng(0,Math.PI*2);
+      scene.add(g); mapObjects.push(g); continue;
+
+    } else if (theme.obstacles==='pipes') {
+      // Coolant/fuel pipes — vertical + horizontal runs with glowing joints
+      const g = new THREE.Group();
+      const acc = theme.accentColor||0x00ff88;
+      const pipeH = rng(2.0,4.5);
+      const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,pipeH,8),
+        new THREE.MeshStandardMaterial({color:theme.pillar,roughness:0.35,metalness:0.75}));
+      pipe.position.y=pipeH/2; g.add(pipe);
+      // Flange rings
+      for(let f=0;f<3;f++){
+        const flange=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,0.14,8),
+          new THREE.MeshStandardMaterial({color:acc,emissive:acc,emissiveIntensity:0.5,roughness:0.2,metalness:0.9}));
+        flange.position.y=0.5+f*(pipeH*0.35); g.add(flange);
+      }
+      // Horizontal cross-pipe
+      const cross=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,rng(1.2,2.4),8),
+        new THREE.MeshStandardMaterial({color:theme.pillar,roughness:0.35,metalness:0.75}));
+      cross.rotation.z=Math.PI/2; cross.position.set(0,rng(1.0,pipeH*0.6),0); g.add(cross);
+      // Glow at joint
+      const jgl=new THREE.PointLight(acc,0.9,4);
+      jgl.position.set(0,rng(1,pipeH*0.5),0); g.add(jgl);
+      g.position.set(px,0,pz);
+      g.rotation.y=rng(0,Math.PI*2);
+      scene.add(g); mapObjects.push(g); continue;
     }
 
     if (mesh) { mesh.castShadow=true; scene.add(mesh); mapObjects.push(mesh); }
