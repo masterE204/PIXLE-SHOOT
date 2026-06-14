@@ -1096,124 +1096,171 @@
         <div class="card-corner cc-br"></div>
         <!-- MUSTAFAR -->
         <div class="card-thumb" style="background:none;padding:0;">
+          <!-- LEVEL 3: Alien crystal cavern planet — twin moons, aurora sky, glowing spires -->
           <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
             <defs>
-              <linearGradient id="must-sky" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#0a0200"/>
-                <stop offset="40%" stop-color="#1a0400"/>
-                <stop offset="80%" stop-color="#4a0c00"/>
-                <stop offset="100%" stop-color="#8a2000"/>
+              <linearGradient id="c3-sky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stop-color="#000510"/>
+                <stop offset="30%"  stop-color="#020a1a"/>
+                <stop offset="65%"  stop-color="#041430"/>
+                <stop offset="100%" stop-color="#0a1a22"/>
               </linearGradient>
-              <linearGradient id="lava-river" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#ff8800"/>
-                <stop offset="50%" stop-color="#ff4400"/>
-                <stop offset="100%" stop-color="#cc2200"/>
+              <linearGradient id="c3-ground" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stop-color="#0d1a20"/>
+                <stop offset="100%" stop-color="#040c10"/>
               </linearGradient>
-              <linearGradient id="lava-glow-grad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#ff6600" stop-opacity="0.4"/>
-                <stop offset="100%" stop-color="#ff2200" stop-opacity="0"/>
-              </linearGradient>
-              <radialGradient id="volcano-glow" cx="50%" cy="100%" r="60%">
-                <stop offset="0%" stop-color="#ff4400" stop-opacity="0.5"/>
-                <stop offset="100%" stop-color="#ff0000" stop-opacity="0"/>
+              <radialGradient id="c3-moon1" cx="40%" cy="40%" r="60%">
+                <stop offset="0%"   stop-color="#ddeeff"/>
+                <stop offset="55%"  stop-color="#8899bb"/>
+                <stop offset="100%" stop-color="#223344"/>
               </radialGradient>
-              <filter id="lava-blur">
-                <feGaussianBlur stdDeviation="3"/>
-              </filter>
-              <filter id="saber-glow">
-                <feGaussianBlur stdDeviation="3" result="b"/>
-                <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-              </filter>
-              <clipPath id="thumb-clip3"><rect width="400" height="200"/></clipPath>
+              <radialGradient id="c3-moon2" cx="35%" cy="35%" r="65%">
+                <stop offset="0%"   stop-color="#ffeedd"/>
+                <stop offset="50%"  stop-color="#cc9966"/>
+                <stop offset="100%" stop-color="#442211"/>
+              </radialGradient>
+              <radialGradient id="c3-crystal-glow" cx="50%" cy="100%" r="80%">
+                <stop offset="0%"   stop-color="#aa44ff" stop-opacity="0.6"/>
+                <stop offset="100%" stop-color="#6600cc" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="c3-crys-g" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stop-color="#dd88ff"/>
+                <stop offset="60%"  stop-color="#7722cc"/>
+                <stop offset="100%" stop-color="#330066" stop-opacity="0.3"/>
+              </radialGradient>
+              <filter id="c3-glow"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="c3-soft"><feGaussianBlur stdDeviation="8"/></filter>
+              <filter id="c3-mid"><feGaussianBlur stdDeviation="4"/></filter>
+              <clipPath id="c3-clip"><rect width="400" height="200"/></clipPath>
             </defs>
-            <g clip-path="url(#thumb-clip3)">
-              <!-- sky -->
-              <rect width="400" height="200" fill="url(#must-sky)"/>
-              <!-- ash clouds -->
-              <ellipse cx="80" cy="30" rx="90" ry="28" fill="#1a0800" opacity="0.7"/>
-              <ellipse cx="200" cy="20" rx="110" ry="22" fill="#150600" opacity="0.6"/>
-              <ellipse cx="330" cy="35" rx="95" ry="25" fill="#1a0800" opacity="0.65"/>
-              <ellipse cx="150" cy="45" rx="80" ry="18" fill="#120500" opacity="0.5"/>
-              <ellipse cx="270" cy="50" rx="70" ry="16" fill="#1a0800" opacity="0.5"/>
-              <!-- embers / sparks -->
-              <circle cx="50" cy="60" r="1.2" fill="#ff8800" opacity="0.8"/>
-              <circle cx="95" cy="45" r="0.8" fill="#ffaa00" opacity="0.7"/>
-              <circle cx="140" cy="70" r="1" fill="#ff6600" opacity="0.6"/>
-              <circle cx="200" cy="55" r="1.4" fill="#ff8800" opacity="0.9"/>
-              <circle cx="248" cy="68" r="0.9" fill="#ffcc00" opacity="0.7"/>
-              <circle cx="300" cy="48" r="1.1" fill="#ff8800" opacity="0.8"/>
-              <circle cx="340" cy="62" r="0.8" fill="#ff6600" opacity="0.6"/>
-              <circle cx="370" cy="42" r="1.3" fill="#ffaa00" opacity="0.7"/>
-              <circle cx="30"  cy="80" r="0.9" fill="#ff8800" opacity="0.5"/>
-              <circle cx="170" cy="82" r="0.7" fill="#ff6600" opacity="0.6"/>
-              <circle cx="390" cy="75" r="1"   fill="#ffbb00" opacity="0.6"/>
-              <!-- background volcanoes -->
-              <polygon points="0,145 30,80 60,145"   fill="#180500" opacity="0.9"/>
-              <polygon points="40,145 80,65 120,145"  fill="#1a0600" opacity="0.85"/>
-              <polygon points="280,145 320,70 360,145" fill="#1a0600" opacity="0.85"/>
-              <polygon points="340,145 375,82 410,145" fill="#180500" opacity="0.9"/>
-              <!-- volcano glow tops -->
-              <ellipse cx="80"  cy="65" rx="22" ry="8" fill="#ff4400" opacity="0.25" filter="url(#lava-blur)"/>
-              <ellipse cx="320" cy="70" rx="22" ry="8" fill="#ff4400" opacity="0.25" filter="url(#lava-blur)"/>
-              <!-- lava glow from below -->
-              <rect x="0" y="120" width="400" height="80" fill="url(#lava-glow-grad)"/>
-              <!-- dark rock platform left -->
-              <polygon points="0,155 0,200 110,200 130,155 80,148 40,152" fill="#1a0800"/>
-              <polygon points="0,155 80,148 40,152" fill="#0a0300"/>
-              <!-- dark rock platform right -->
-              <polygon points="270,155 290,148 360,152 400,155 400,200 270,200" fill="#1a0800"/>
-              <!-- main lava river -->
-              <path d="M0,165 Q60,150 130,158 Q200,168 270,158 Q330,150 400,162 L400,200 L0,200 Z" fill="url(#lava-river)"/>
-              <!-- lava surface shimmer lines -->
-              <path d="M20,170 Q80,162 140,168" fill="none" stroke="#ffcc44" stroke-width="1" opacity="0.4"/>
-              <path d="M60,178 Q130,170 200,176" fill="none" stroke="#ffaa22" stroke-width="0.8" opacity="0.3"/>
-              <path d="M200,174 Q270,166 340,172" fill="none" stroke="#ffcc44" stroke-width="1" opacity="0.4"/>
-              <path d="M260,182 Q320,174 390,180" fill="none" stroke="#ffaa22" stroke-width="0.8" opacity="0.3"/>
-              <!-- lava bubbles -->
-              <circle cx="100" cy="172" r="5" fill="#ff6600" opacity="0.6"/>
-              <circle cx="100" cy="172" r="8" fill="#ff4400" opacity="0.15"/>
-              <circle cx="230" cy="180" r="4" fill="#ff7700" opacity="0.5"/>
-              <circle cx="310" cy="170" r="6" fill="#ff5500" opacity="0.55"/>
-              <!-- rock pillars in lava -->
-              <rect x="155" y="140" width="18" height="32" rx="2" fill="#150500"/>
-              <rect x="220" y="135" width="14" height="37" rx="2" fill="#120400"/>
-              <!-- narrow bridge between platforms -->
-              <rect x="125" y="152" width="150" height="8" rx="3" fill="#1f0800"/>
-              <rect x="125" y="152" width="150" height="2" rx="1" fill="#2a0c00" opacity="0.6"/>
-              <!-- Obi-Wan silhouette (high ground) -->
-              <g transform="translate(118,128)">
-                <!-- body -->
-                <rect x="-4" y="-20" width="8" height="22" rx="2" fill="#0a0300"/>
-                <!-- head -->
-                <circle cx="0" cy="-24" r="5" fill="#0a0300"/>
-                <!-- robe flow -->
-                <path d="M-4,2 Q-10,10 -8,20 L8,20 Q10,10 4,2 Z" fill="#0a0300"/>
-                <!-- saber arm raised -->
-                <line x1="4" y1="-14" x2="24" y2="-38" stroke="#0a0300" stroke-width="3" stroke-linecap="round"/>
-                <!-- BLUE lightsaber -->
-                <line x1="10" y1="-20" x2="34" y2="-48" stroke="#00aaff" stroke-width="4" stroke-linecap="round" filter="url(#saber-glow)" opacity="0.95"/>
-                <line x1="10" y1="-20" x2="34" y2="-48" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
-              </g>
-              <!-- Anakin silhouette (lower ground) -->
-              <g transform="translate(175,138)">
-                <rect x="-4" y="-18" width="8" height="20" rx="2" fill="#0a0300"/>
-                <circle cx="0" cy="-22" r="5" fill="#0a0300"/>
-                <path d="M-4,2 Q-9,8 -7,18 L7,18 Q9,8 4,2 Z" fill="#0a0300"/>
-                <!-- saber arm -->
-                <line x1="-4" y1="-12" x2="-22" y2="-34" stroke="#0a0300" stroke-width="3" stroke-linecap="round"/>
-                <!-- RED lightsaber -->
-                <line x1="-10" y1="-18" x2="-32" y2="-44" stroke="#ff1111" stroke-width="4" stroke-linecap="round" filter="url(#saber-glow)" opacity="0.95"/>
-                <line x1="-10" y1="-18" x2="-32" y2="-44" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
-              </g>
-              <!-- saber clash glow -->
-              <circle cx="148" cy="110" r="14" fill="#ffffff" opacity="0.08" filter="url(#lava-blur)"/>
-              <circle cx="148" cy="110" r="7"  fill="#ffffff" opacity="0.12"/>
-              <!-- lava spray particles -->
-              <circle cx="180" cy="162" r="2" fill="#ffaa00" opacity="0.8"/>
-              <circle cx="165" cy="155" r="1.5" fill="#ff8800" opacity="0.7"/>
-              <circle cx="195" cy="158" r="1.8" fill="#ffcc00" opacity="0.6"/>
+            <g clip-path="url(#c3-clip)">
+              <!-- night sky -->
+              <rect width="400" height="200" fill="url(#c3-sky)"/>
+
+              <!-- AURORA BOREALIS bands — layered translucent arcs -->
+              <path d="M-20,55 Q100,20 200,35 Q300,50 420,22" fill="none" stroke="#00ffaa" stroke-width="18" opacity="0.07" filter="url(#c3-soft)"/>
+              <path d="M-20,65 Q100,32 200,48 Q300,62 420,34" fill="none" stroke="#44ffcc" stroke-width="12" opacity="0.09" filter="url(#c3-soft)"/>
+              <path d="M-20,72 Q80,42  200,56 Q320,70 420,45" fill="none" stroke="#aa44ff" stroke-width="10" opacity="0.1"  filter="url(#c3-soft)"/>
+              <path d="M-20,80 Q100,52 200,64 Q300,76 420,55" fill="none" stroke="#6622ff" stroke-width="8"  opacity="0.09" filter="url(#c3-soft)"/>
+              <path d="M0,45  Q80,28  180,40 Q280,52 400,30" fill="none" stroke="#00ddff" stroke-width="6"  opacity="0.08" filter="url(#c3-soft)"/>
+              <!-- aurora brighter cores -->
+              <path d="M40,58  Q140,38 240,50 Q320,58 400,42" fill="none" stroke="#44ffcc" stroke-width="2" opacity="0.25"/>
+              <path d="M0,72   Q120,52 220,64 Q310,74 400,60" fill="none" stroke="#aa44ff" stroke-width="2" opacity="0.2"/>
+
+              <!-- stars -->
+              <circle cx="8"   cy="8"   r="0.9" fill="#fff" opacity="0.9"/>
+              <circle cx="28"  cy="3"   r="0.6" fill="#ccf" opacity="0.8"/>
+              <circle cx="55"  cy="14"  r="0.8" fill="#fff" opacity="0.85"/>
+              <circle cx="82"  cy="6"   r="0.5" fill="#ddf" opacity="0.7"/>
+              <circle cx="108" cy="18"  r="0.7" fill="#fff" opacity="0.8"/>
+              <circle cx="138" cy="8"   r="0.6" fill="#ccf" opacity="0.75"/>
+              <circle cx="165" cy="15"  r="0.9" fill="#fff" opacity="0.9"/>
+              <circle cx="195" cy="5"   r="0.5" fill="#ddf" opacity="0.7"/>
+              <circle cx="225" cy="18"  r="0.7" fill="#fff" opacity="0.8"/>
+              <circle cx="255" cy="7"   r="0.8" fill="#ccf" opacity="0.85"/>
+              <circle cx="282" cy="20"  r="0.6" fill="#fff" opacity="0.7"/>
+              <circle cx="310" cy="10"  r="0.9" fill="#ddf" opacity="0.9"/>
+              <circle cx="338" cy="4"   r="0.6" fill="#fff" opacity="0.8"/>
+              <circle cx="362" cy="16"  r="0.7" fill="#ccf" opacity="0.75"/>
+              <circle cx="390" cy="8"   r="0.8" fill="#fff" opacity="0.85"/>
+              <circle cx="18"  cy="38"  r="0.5" fill="#fff" opacity="0.55"/>
+              <circle cx="48"  cy="32"  r="0.6" fill="#ddf" opacity="0.6"/>
+              <circle cx="380" cy="35"  r="0.5" fill="#fff" opacity="0.6"/>
+              <circle cx="352" cy="30"  r="0.6" fill="#ccf" opacity="0.55"/>
+
+              <!-- TWIN MOONS -->
+              <!-- Moon 1 — ice blue, large, upper left -->
+              <circle cx="72" cy="42" r="26" fill="url(#c3-moon1)"/>
+              <!-- craters on moon 1 -->
+              <circle cx="62" cy="34" r="5" fill="#667799" opacity="0.5"/>
+              <circle cx="78" cy="50" r="4" fill="#556688" opacity="0.4"/>
+              <circle cx="85" cy="38" r="3" fill="#778899" opacity="0.35"/>
+              <!-- moon 1 shadow edge -->
+              <circle cx="72" cy="42" r="26" fill="#000" opacity="0.22" transform="translate(8,0)"/>
+              <circle cx="72" cy="42" r="26" fill="none" stroke="#aabbcc" stroke-width="1" opacity="0.3"/>
+              <!-- Moon 2 — warm amber, smaller, mid right -->
+              <circle cx="328" cy="30" r="16" fill="url(#c3-moon2)"/>
+              <circle cx="322" cy="24" r="3"  fill="#995533" opacity="0.45"/>
+              <circle cx="334" cy="35" r="2.5" fill="#886644" opacity="0.4"/>
+              <circle cx="328" cy="30" r="16" fill="#000" opacity="0.18" transform="translate(5,0)"/>
+              <circle cx="328" cy="30" r="16" fill="none" stroke="#ccaa88" stroke-width="0.8" opacity="0.3"/>
+
+              <!-- distant alien mountain range (dark jagged silhouette) -->
+              <polygon points="0,130 18,100 36,118 55,85 78,112 100,78 122,105 145,70 168,100 192,68 215,95 238,72 262,100 285,80 308,105 332,78 355,100 378,82 400,98 400,148 0,148" fill="#080f18" opacity="0.98"/>
+              <!-- mountain ridge subtle highlight -->
+              <polyline points="0,130 18,100 36,118 55,85 78,112 100,78 122,105 145,70 168,100 192,68 215,95 238,72 262,100 285,80 308,105 332,78 355,100 378,82 400,98" fill="none" stroke="#1a3344" stroke-width="1" opacity="0.5"/>
+
+              <!-- crystal spire glow beneath (ground uplight) -->
+              <rect x="0" y="130" width="400" height="70" fill="url(#c3-crystal-glow)" opacity="0.7"/>
+
+              <!-- alien ground surface -->
+              <path d="M0,158 Q40,152 80,158 Q130,164 180,155 Q230,148 280,156 Q330,163 400,155 L400,200 L0,200 Z" fill="url(#c3-ground)"/>
+              <!-- ground surface cracks glowing purple -->
+              <path d="M30,170 Q60,165 90,170"   fill="none" stroke="#6622cc" stroke-width="1"   opacity="0.6"/>
+              <path d="M50,180 Q90,175 120,182"  fill="none" stroke="#8833dd" stroke-width="0.8" opacity="0.5"/>
+              <path d="M200,168 Q230,162 260,168" fill="none" stroke="#5511bb" stroke-width="1"   opacity="0.55"/>
+              <path d="M300,175 Q340,170 370,177" fill="none" stroke="#7722cc" stroke-width="0.8" opacity="0.5"/>
+              <!-- ground glow pools -->
+              <ellipse cx="100" cy="178" rx="30" ry="8" fill="#aa44ff" opacity="0.12" filter="url(#c3-mid)"/>
+              <ellipse cx="300" cy="174" rx="25" ry="7" fill="#8833ee" opacity="0.1"  filter="url(#c3-mid)"/>
+
+              <!-- CRYSTAL SPIRES — each a polygon with inner glow highlight -->
+              <!-- spire 1 — far left, short -->
+              <polygon points="22,158 30,110 38,158" fill="#1a0a44"/>
+              <polygon points="26,158 30,116 34,158" fill="#3311aa" opacity="0.6"/>
+              <line x1="30" y1="110" x2="30" y2="145" stroke="#cc88ff" stroke-width="1" opacity="0.4"/>
+              <circle cx="30" cy="110" r="4" fill="#cc88ff" opacity="0.5" filter="url(#c3-glow)"/>
+
+              <!-- spire 2 — left, tall -->
+              <polygon points="55,162 68,72 81,162"  fill="#130840"/>
+              <polygon points="60,162 68,80 76,162"  fill="#4422bb" opacity="0.55"/>
+              <line x1="68" y1="72"  x2="68" y2="140" stroke="#dd99ff" stroke-width="1.2" opacity="0.45"/>
+              <circle cx="68" cy="72" r="6" fill="#dd99ff" opacity="0.6" filter="url(#c3-glow)"/>
+
+              <!-- spire 3 — left-center, medium -->
+              <polygon points="110,160 120,98 130,160" fill="#150944"/>
+              <polygon points="114,160 120,105 126,160" fill="#3311aa" opacity="0.5"/>
+              <circle cx="120" cy="98" r="5" fill="#bb77ff" opacity="0.55" filter="url(#c3-glow)"/>
+
+              <!-- spire 4 — center, TALLEST, hero spire -->
+              <polygon points="178,165 200,38 222,165"  fill="#0e0630"/>
+              <polygon points="185,165 200,48 215,165"  fill="#5533cc" opacity="0.5"/>
+              <polygon points="192,165 200,60 208,165"  fill="#8855ee" opacity="0.3"/>
+              <!-- inner crystal faces -->
+              <polygon points="200,48 208,165 200,60"   fill="#cc99ff" opacity="0.18"/>
+              <line x1="200" y1="38" x2="200" y2="150" stroke="#eeccff" stroke-width="1.5" opacity="0.35"/>
+              <!-- tip glow — brightest -->
+              <circle cx="200" cy="38" r="10" fill="#cc88ff" opacity="0.5" filter="url(#c3-soft)"/>
+              <circle cx="200" cy="38" r="6"  fill="#dd99ff" opacity="0.7" filter="url(#c3-glow)"/>
+              <circle cx="200" cy="38" r="3"  fill="#ffffff" opacity="0.8"/>
+
+              <!-- spire 5 — right-center -->
+              <polygon points="262,161 275,88 288,161"  fill="#130840"/>
+              <polygon points="267,161 275,96 283,161"  fill="#4422bb" opacity="0.55"/>
+              <circle cx="275" cy="88" r="5" fill="#bb77ff" opacity="0.6" filter="url(#c3-glow)"/>
+
+              <!-- spire 6 — right, medium-tall -->
+              <polygon points="318,160 330,105 342,160" fill="#150944"/>
+              <polygon points="322,160 330,112 338,160" fill="#3311aa" opacity="0.5"/>
+              <circle cx="330" cy="105" r="4" fill="#cc88ff" opacity="0.5" filter="url(#c3-glow)"/>
+
+              <!-- spire 7 — far right, short -->
+              <polygon points="362,158 370,122 378,158" fill="#1a0a44"/>
+              <circle cx="370" cy="122" r="3.5" fill="#bb66ff" opacity="0.5" filter="url(#c3-glow)"/>
+
+              <!-- floating crystal shards -->
+              <polygon points="148,95 154,82 160,95 154,102" fill="#8833cc" opacity="0.55" filter="url(#c3-glow)"/>
+              <polygon points="245,80 250,68 255,80 250,87" fill="#9944dd" opacity="0.5"  filter="url(#c3-glow)"/>
+              <polygon points="88,118 92,108 96,118 92,124" fill="#7722bb" opacity="0.45" filter="url(#c3-glow)"/>
+              <polygon points="310,112 315,100 320,112 315,120" fill="#8833cc" opacity="0.4" filter="url(#c3-glow)"/>
+
+              <!-- purple energy orb floating near hero spire -->
+              <circle cx="200" cy="95" r="12" fill="#8822cc" opacity="0.18" filter="url(#c3-soft)"/>
+              <circle cx="200" cy="95" r="6"  fill="#aa44ee" opacity="0.3"  filter="url(#c3-mid)"/>
+              <circle cx="200" cy="95" r="3"  fill="#cc88ff" opacity="0.55"/>
+
               <!-- label -->
-              <text x="8" y="194" font-family="monospace" font-size="8" fill="#ff6622" opacity="0.8" letter-spacing="2">MUSTAFAR</text>
+              <text x="8" y="194" font-family="monospace" font-size="8" fill="#bb66ff" opacity="0.85" letter-spacing="2">CRYSTAL WORLD · XENON-7</text>
             </g>
           </svg>
         </div>
