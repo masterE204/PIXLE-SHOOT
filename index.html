@@ -646,14 +646,14 @@ function buildMap(waveNum) {
 
   // Ambient particles (dust / snow / embers / spores)
   const ambDefs = {
-    'Tatooine':  { col:0xddbb88, count:60, speed:0.4, size:0.06, drift:true  },
-    'Death Star': { col:0x8888aa, count:30, speed:0.2, size:0.04, drift:false },
-    'Hoth':      { col:0xeef8ff, count:80, speed:0.6, size:0.07, drift:true  },
-    'Endor':     { col:0x88ee44, count:50, speed:0.3, size:0.05, drift:true  },
-    'Coruscant': { col:0x4466ff, count:40, speed:0.5, size:0.04, drift:false },
-    'Mustafar':  { col:0xff5500, count:70, speed:0.7, size:0.08, drift:true  },
-    'Dagobah':   { col:0x44dd88, count:55, speed:0.3, size:0.05, drift:true  },
-    'Naboo':     { col:0xaaddff, count:45, speed:0.4, size:0.05, drift:true  },
+    'Death Star — Command Deck':        { col:0xff2200, count:25, speed:0.15, size:0.035, drift:false },
+    'Star Destroyer — Bridge':          { col:0x4488ff, count:20, speed:0.12, size:0.030, drift:false },
+    'Imperial Hangar Bay':              { col:0xffcc44, count:35, speed:0.20, size:0.045, drift:true  },
+    'Rebel Cruiser — Engine Room':      { col:0x00ff88, count:50, speed:0.35, size:0.050, drift:true  },
+    'Death Star — Reactor Core':        { col:0xff44ff, count:60, speed:0.45, size:0.055, drift:true  },
+    'Star Destroyer — Detention Block': { col:0x00ffcc, count:18, speed:0.10, size:0.030, drift:false },
+    'Space Station — Docking Port':     { col:0xff8844, count:30, speed:0.25, size:0.040, drift:true  },
+    'Super Star Destroyer — Combat Deck':{ col:0xff0000, count:40, speed:0.30, size:0.040, drift:false},
   };
   const ad = ambDefs[theme.name];
   if (ad) {
