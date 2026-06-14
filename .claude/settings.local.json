@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(pip show ursina 2>$null)",
+      "PowerShell(if \\($?\\) { \"ursina installed\" } else { \"not installed\" })",
+      "Bash(ls \"C:\\\\Users\\\\ETHAN\\\\pixle shoot\\\\\")",
+      "Skill(run)",
+      "Skill(run:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5005/index.html)",
+      "Bash(python -m http.server 8080)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\ETHAN\\\\pixle shoot\\\\fps-shooter.html\")",
+      "Bash(python -m http.server 5005)",
+      "Bash(gh auth *)"
+    ]
+  }
+}

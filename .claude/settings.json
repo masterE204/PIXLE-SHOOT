@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "cd 'C:\\Users\\ETHAN\\pixle shoot'; $changed = git status --porcelain | Where-Object { $_ -match '\\.html$|\\.css$|\\.js$' }; if ($changed) { git add *.html 2>$null; $date = Get-Date -Format 'yyyy-MM-dd HH:mm'; git commit -m \"Auto-sync: $date\" 2>$null; git push origin main 2>$null }",
+            "statusMessage": "Syncing to GitHub...",
+            "async": true,
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git *)"
+    ]
+  }
+}
