@@ -1642,7 +1642,8 @@ function spawnBoss() {
 
   const group=new THREE.Group();
   group.position.set(px,0,pz);
-  const hpFg = buildBossMesh(group, def.color);
+  const bossIdx = (wave-1)%BOSS_DEFS.length;
+  const hpFg = buildBossMesh(group, def.color, bossIdx);
   scene.add(group);
 
   enemies.push({
