@@ -2089,7 +2089,7 @@ document.addEventListener('keydown', e=>{
   if (gameOver&&e.code==='KeyR') location.reload();
   if (!choosingMutation&&!gameOver) {
     if (e.code==='Space') doShoot();
-    const map={'Digit1':'pistol','Digit2':'shotgun','Digit3':'uzi','Digit4':'launcher','Digit5':'laser'};
+    const map={'Digit1':'pistol','Digit2':'shotgun','Digit3':'uzi','Digit4':'launcher','Digit5':'laser','Digit6':'lightsaber','Digit7':'vibroblade','Digit8':'electrostaff'};
     if (map[e.code]&&inventory[map[e.code]]) { currentWeapon=map[e.code]; refreshWeaponBar(); }
   }
 });
