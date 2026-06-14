@@ -891,40 +891,48 @@ function doMove(fr, fc, tr, tc) {
 }
 
 function executeMove(fr, fc, tr, tc, promo) {
-  // Save history
   history.push({ fr, fc, tr, tc, board: cloneBoard(board),
     capturedByWhite: [...capturedByWhite], capturedByBlack: [...capturedByBlack],
     scoreWhite, scoreBlack, moveLogData: JSON.parse(JSON.stringify(moveLogData)), moveCount });
 
   const piece = board[fr][fc];
-  const isEP = piece.t==='p'&&fc!==tc&&!board[tr][tc];
-  const capturedPiece = applyMove(board, fr, fc, tr, tc, promo);
+  const willCapture = board[tr][tc] || (piece.t==='p'&&fc!==tc&&!board[tr][tc]);
 
-  if (capturedPiece) {
-    if (turn==='w') {
-      capturedByWhite.push(capturedPiece);
-      scoreWhite += PIECE_VALUE[capturedPiece.t] || 0;
-    } else {
-      capturedByBlack.push(capturedPiece);
-      scoreBlack += PIECE_VALUE[capturedPiece.t] || 0;
-    }
+  if (willCapture) {
+    // Dramatic capture sequence: faint the victim first, then move
+    const victimCell = getCellEl(tr, tc);
+    const attackerCell = getCellEl(fr, fc);
+    soundAttack();
+    screenFlash('#ff000044');
+    pokeFaint(victimCell, () => {
+      const capturedPiece = applyMove(board, fr, fc, tr, tc, promo);
+      if (capturedPiece) {
+        if (turn==='w') { capturedByWhite.push(capturedPiece); scoreWhite += PIECE_VALUE[capturedPiece.t]||0; }
+        else            { capturedByBlack.push(capturedPiece); scoreBlack += PIECE_VALUE[capturedPiece.t]||0; }
+        burstParticles(tr, tc, capturedPiece.c==='w'?'#ffffff':'#a855f7');
+        spawnDamageText(tr, tc, '-' + PIECE_VALUE[capturedPiece.t]);
+      }
+      logAndFinish(fr, fc, tr, tc, promo, capturedPiece);
+      soundLand();
+    });
+  } else {
+    soundJump();
+    const capturedPiece = applyMove(board, fr, fc, tr, tc, promo);
+    animatePieceJump(fr, fc, tr, tc, () => {
+      logAndFinish(fr, fc, tr, tc, promo, capturedPiece);
+      soundLand();
+    });
   }
+}
 
-  // Move log
+function logAndFinish(fr, fc, tr, tc, promo, capturedPiece) {
   const notation = sq(tr,tc) + (capturedPiece?'x':'') + (promo?'='+promo.toUpperCase():'');
   moveCount++;
-  if (turn==='w') {
-    const num = Math.ceil(moveCount/2);
-    moveLogData.push({n:num, w:notation, b:''});
-  } else {
-    if (moveLogData.length>0) moveLogData[moveLogData.length-1].b = notation;
-  }
-
+  if (turn==='w') { moveLogData.push({n:Math.ceil(moveCount/2), w:notation, b:''}); }
+  else            { if (moveLogData.length>0) moveLogData[moveLogData.length-1].b = notation; }
   lastMove = {fr,fc,tr,tc};
-  selected = null;
-  validMoves = [];
+  selected = null; validMoves = [];
   turn = turn==='w'?'b':'w';
-
   render();
   checkGameOver();
 }
