@@ -1807,33 +1807,29 @@ function vrClick(e) {
   // Check tile hits first (for moves)
   const tiles = vrScene.children.filter(o=>o.userData.type==='tile');
   const tileHits = ray.intersectObjects(tiles);
-  if (tileHits.length && vrSelected) {
-    const {r,c} = tileHits[0].object.userData;
-    const vm = vrValidTargets.find(([vr,vc])=>vr===r&&vc===c);
-    if (vm) {
-      vrSelected = null; vrValidTargets = [];
-      doMove(vm[2]||vrSelected?.[0]??r, vm[3]||vrSelected?.[1]??c, r, c);
-      // Use a simpler approach: map back to 2D board click
-      return;
-    }
-  }
 
-  // Check piece hits
+  // Check piece hits first
   const pieces = vrPieceMeshes.filter(o=>o.userData.type==='piece');
   const hits = ray.intersectObjects(pieces);
   if (hits.length) {
     const {r,c,piece} = hits[0].object.userData;
     if (piece.c === turn) {
       vrSelected = [r,c];
-      vrValidTargets = legalMoves(board,r,c).map(([mr,mc])=>[mr,mc,r,c]);
-      vrSyncBoard();
-    } else if (vrSelected && vrValidTargets.find(([vr,vc])=>vr===r&&vc===c)) {
-      doMove(vrSelected[0], vrSelected[1], r, c);
-      vrSelected = null; vrValidTargets = [];
+      vrValidTargets = legalMoves(board,r,c);
+      vrSyncBoard(); return;
+    } else if (vrSelected) {
+      const vm = vrValidTargets.find(([vr,vc])=>vr===r&&vc===c);
+      if (vm) { const [fr,fc]=[vrSelected[0],vrSelected[1]]; vrSelected=null; vrValidTargets=[]; doMove(fr,fc,r,c); return; }
     }
-  } else if (!tileHits.length) {
-    vrSelected = null; vrValidTargets = []; vrSyncBoard();
   }
+
+  if (tileHits.length && vrSelected) {
+    const {r,c} = tileHits[0].object.userData;
+    const vm = vrValidTargets.find(([vr,vc])=>vr===r&&vc===c);
+    if (vm) { const [fr,fc]=[vrSelected[0],vrSelected[1]]; vrSelected=null; vrValidTargets=[]; doMove(fr,fc,r,c); return; }
+  }
+
+  vrSelected = null; vrValidTargets = []; vrSyncBoard();
 }
 
 function vrAnimate() {
