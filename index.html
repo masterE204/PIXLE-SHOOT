@@ -1279,48 +1279,354 @@ const BOSS_DEFS = [
   { name:'🔴 Darth Maul',         color:0xcc1100 },
 ];
 
-function buildBossMesh(group, col) {
-  const mat = new THREE.MeshStandardMaterial({ color: col });
-  // Body
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.8,2.4,1.2), mat);
-  body.position.y=1.0; body.castShadow=true; group.add(body);
-  // Head
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.9,10,8), mat);
-  head.position.y=3.0; group.add(head);
-  // Red eyes
-  const eyeMat = new THREE.MeshBasicMaterial({ color:0xff0000 });
-  for (const sx of [-0.3,0.3]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.15,6,6), eyeMat);
-    eye.position.set(sx,3.05,0.8); group.add(eye);
-  }
-  // Eye glow
-  const glow = new THREE.PointLight(0xff0000,2.5,6);
-  glow.position.set(0,3.0,0.5); group.add(glow);
-  // Horns
-  const hornMat = new THREE.MeshStandardMaterial({ color:0x111111 });
-  for (const sx of [-0.5,0.5]) {
-    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.18,0.9,6), hornMat);
-    horn.position.set(sx,3.8,0); horn.rotation.z = sx>0?-0.4:0.4; group.add(horn);
-  }
-  // Arms
-  for (const sx of [-1.5,1.5]) {
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.5,1.8,0.5), mat);
-    arm.position.set(sx,1.2,0); arm.rotation.z = sx>0?-0.3:0.3; group.add(arm);
-  }
-  // Spinning aura ring on the ground
-  const aura = new THREE.Mesh(
-    new THREE.RingGeometry(1.9,2.4,32),
-    new THREE.MeshBasicMaterial({ color:col, transparent:true, opacity:0.5, side:THREE.DoubleSide })
-  );
-  aura.rotation.x=-Math.PI/2; aura.position.y=0.06;
-  group.add(aura); group.userData.aura=aura;
-  // HP bar plane
-  const hpBg = new THREE.Mesh(new THREE.PlaneGeometry(2.5,0.2), new THREE.MeshBasicMaterial({color:0x440000,depthTest:false}));
-  const hpFg = new THREE.Mesh(new THREE.PlaneGeometry(2.5,0.2), new THREE.MeshBasicMaterial({color:0xff2222,depthTest:false}));
-  hpBg.position.set(0,4.8,0); hpFg.position.set(0,4.8,0.01);
+// ─── BOSS MESH BUILDERS ──────────────────
+function _bossHpBar(group, yPos) {
+  const hpBg = new THREE.Mesh(new THREE.PlaneGeometry(2.8,0.22), new THREE.MeshBasicMaterial({color:0x440000,depthTest:false}));
+  const hpFg = new THREE.Mesh(new THREE.PlaneGeometry(2.8,0.22), new THREE.MeshBasicMaterial({color:0xff2222,depthTest:false}));
+  hpBg.position.set(0,yPos,0); hpFg.position.set(0,yPos,0.01);
   hpBg.renderOrder=1; hpFg.renderOrder=2;
   group.add(hpBg); group.add(hpFg);
   return hpFg;
+}
+function _bossAura(group, col) {
+  const aura = new THREE.Mesh(
+    new THREE.RingGeometry(2.0,2.6,32),
+    new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.5,side:THREE.DoubleSide})
+  );
+  aura.rotation.x=-Math.PI/2; aura.position.y=0.06;
+  group.add(aura); group.userData.aura=aura;
+}
+
+// Darth Vader — black armored figure, iconic dome helmet, cape, red lightsaber, chest panel
+function buildDarthVader(group) {
+  // Legs
+  const legM = pbr(0x0a0a0a,0.5,0.4);
+  for (const sx of [-0.35,0.35]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.45,1.2,0.45), legM);
+    leg.position.set(sx,0.6,0); group.add(leg);
+    const boot = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.35,0.65), pbr(0x050505,0.7,0.2));
+    boot.position.set(sx,0.18,0.06); group.add(boot);
+  }
+  // Torso — black armor
+  const torsoM = pbr(0x111111,0.3,0.6);
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(1.7,1.5,1.0), torsoM);
+  torso.position.y=1.95; group.add(torso);
+  // Chest panel (gray box with emissive indicator lights)
+  const panelM = pbr(0x222222,0.4,0.5);
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.45,0.12), panelM);
+  panel.position.set(0,2.1,0.57); group.add(panel);
+  const btnColors = [0xff0000,0x00ff00,0xffff00,0xff8800,0xff0000,0x00ff00];
+  btnColors.forEach((c,i) => {
+    const btn = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.07,0.06),
+      new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:1.2}));
+    btn.position.set(-0.22+( i%3)*0.22, 2.18-Math.floor(i/3)*0.18, 0.64); group.add(btn);
+  });
+  // Shoulders (pauldrons)
+  for (const sx of [-1.05,1.05]) {
+    const sh = new THREE.Mesh(new THREE.BoxGeometry(0.55,0.45,1.1), pbr(0x0d0d0d,0.35,0.5));
+    sh.position.set(sx,2.55,0); group.add(sh);
+  }
+  // Arms
+  for (const sx of [-1.15,1.15]) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.42,1.1,0.42), pbr(0x0a0a0a,0.4,0.5));
+    arm.position.set(sx,1.9,0); arm.rotation.z=sx>0?-0.15:0.15; group.add(arm);
+    const glove = new THREE.Mesh(new THREE.BoxGeometry(0.38,0.4,0.4), pbr(0x050505,0.6,0.3));
+    glove.position.set(sx, 1.3, 0); group.add(glove);
+  }
+  // Cape — three thin panels hanging behind
+  const capeM = new THREE.MeshStandardMaterial({color:0x060606,roughness:0.9,metalness:0,side:THREE.DoubleSide});
+  const capeTop = new THREE.Mesh(new THREE.BoxGeometry(2.0,0.05,0.1), capeM);
+  capeTop.position.set(0,2.7,-0.5); group.add(capeTop);
+  const capeBody = new THREE.Mesh(new THREE.PlaneGeometry(2.0,2.6), capeM);
+  capeBody.rotation.x=0.1; capeBody.position.set(0,1.5,-0.56); group.add(capeBody);
+  // Neck
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.3,0.35,8), pbr(0x080808,0.4,0.5));
+  neck.position.y=2.85; group.add(neck);
+  // Helmet — iconic dome
+  const helmBase = new THREE.Mesh(new THREE.BoxGeometry(1.1,0.5,0.95), pbr(0x0a0a0a,0.3,0.7));
+  helmBase.position.y=3.2; group.add(helmBase);
+  // Dome crown
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.62,12,8,0,Math.PI*2,0,Math.PI*0.55), pbr(0x0d0d0d,0.25,0.75));
+  dome.position.set(0,3.35,0); group.add(dome);
+  // Faceplate — lower face with ridges
+  const faceplate = new THREE.Mesh(new THREE.BoxGeometry(1.0,0.55,0.12), pbr(0x111111,0.3,0.6));
+  faceplate.position.set(0,3.0,0.44); group.add(faceplate);
+  // Mouthpiece / respirator grill
+  for (let i=-1;i<=1;i++) {
+    const grill = new THREE.Mesh(new THREE.BoxGeometry(0.14,0.08,0.06), pbr(0x1a1a1a,0.6,0.3));
+    grill.position.set(i*0.2,2.85,0.5); group.add(grill);
+  }
+  // Eye lenses (dark gray with slight glow)
+  const lensM = new THREE.MeshStandardMaterial({color:0x222222,emissive:0x440000,emissiveIntensity:0.8,roughness:0.1,metalness:0.8});
+  for (const sx of [-0.28,0.28]) {
+    const lens = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.14,0.08), lensM);
+    lens.position.set(sx,3.1,0.5); group.add(lens);
+  }
+  // Red lightsaber in right hand
+  const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.07,0.6,8), pbr(0x888888,0.2,0.9));
+  hilt.position.set(1.6,1.1,0.3); hilt.rotation.z=0.5; group.add(hilt);
+  const blade = new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,2.2,8),
+    new THREE.MeshStandardMaterial({color:0xff0000,emissive:0xff0000,emissiveIntensity:3.0,transparent:true,opacity:0.9}));
+  blade.position.set(1.95,2.1,0.45); blade.rotation.z=0.5; group.add(blade);
+  const saberGlow = new THREE.PointLight(0xff0000,3.0,5); saberGlow.position.set(2.0,2.1,0.4); group.add(saberGlow);
+  // Dark Force glow
+  const glow = new THREE.PointLight(0x4400ff,1.5,8); glow.position.set(0,2.0,0); group.add(glow);
+  _bossAura(group, 0xff0000);
+  return _bossHpBar(group, 5.2);
+}
+
+// Emperor Palpatine — hunched dark-robed elder, pale face, lightning hands
+function buildPalpatine(group) {
+  // Wide robe base (cone-like body)
+  const robeM = pbr(0x080810,0.9,0.0);
+  const robeBase = new THREE.Mesh(new THREE.CylinderGeometry(0.95,1.3,2.2,12), robeM);
+  robeBase.position.y=1.1; group.add(robeBase);
+  // Upper robe
+  const robeUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.95,1.0,12), robeM);
+  robeUpper.position.y=2.4; group.add(robeUpper);
+  // Hunched torso
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(1.1,0.9,0.85), pbr(0x0c0c14,0.8,0.0));
+  torso.position.set(0,2.7,-0.18); torso.rotation.x=-0.35; group.add(torso);
+  // Arms — outstretched, claw-like
+  for (const sx of [-1,1]) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.85,0.28), pbr(0x0a0a12,0.8,0.0));
+    arm.position.set(sx*0.9,2.55,0.3); arm.rotation.z=sx*(-0.8); arm.rotation.x=-0.3; group.add(arm);
+    // Fingers — 3 thin claws
+    for (let f=0;f<3;f++) {
+      const finger = new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.01,0.35,4),
+        pbr(0xc8b490,0.8,0.0));
+      finger.position.set(sx*1.55+(f-1)*0.08*sx, 2.3+(f===1?-0.05:0), 0.55);
+      finger.rotation.x=0.6; finger.rotation.z=sx*(0.4+(f-1)*0.2);
+      group.add(finger);
+    }
+  }
+  // Neck
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.22,0.3,8), pbr(0xb8a880,0.7,0.0));
+  neck.position.set(0,3.15,-0.12); group.add(neck);
+  // Face — pale, aged, skeletal
+  const faceM = pbr(0xc8ba98,0.85,0.0);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.48,10,8), faceM);
+  head.scale.set(1,1.15,0.9); head.position.set(0,3.48,-0.22); group.add(head);
+  // Sunken yellow eyes
+  const eyeM = new THREE.MeshStandardMaterial({color:0xddaa00,emissive:0xaa7700,emissiveIntensity:2.0});
+  for (const sx of [-0.18,0.18]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.1,6,6), eyeM);
+    eye.position.set(sx,3.54,0.24); group.add(eye);
+  }
+  // Deep cowl hood
+  const hood = new THREE.Mesh(new THREE.ConeGeometry(0.62,0.9,10), pbr(0x050508,0.95,0.0));
+  hood.position.set(0,3.88,-0.28); hood.rotation.x=0.25; group.add(hood);
+  const hoodBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.72,0.22,10), pbr(0x080810,0.9,0.0));
+  hoodBrim.position.set(0,3.55,-0.18); group.add(hoodBrim);
+  // Wrinkle lines (thin planes across face)
+  const wrinkleM = new THREE.MeshBasicMaterial({color:0x998870});
+  for (let i=0;i<3;i++) {
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(0.28,0.03), wrinkleM);
+    w.position.set(0,3.42+i*0.07,0.46); group.add(w);
+  }
+  // Lightning bolt effects from hands
+  const boltM = new THREE.MeshBasicMaterial({color:0xaaaaff,transparent:true,opacity:0.7});
+  for (const sx of [-1,1]) {
+    for (let b=0;b<4;b++) {
+      const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.03,0.6+(b%2)*0.2,4), boltM);
+      bolt.position.set(sx*1.7+b*sx*0.12, 2.05+b*0.15, 0.6);
+      bolt.rotation.z=sx*(0.5+b*0.2); bolt.rotation.x=(b%2)*0.3; group.add(bolt);
+    }
+  }
+  // Yellow lightning glow
+  const glow = new THREE.PointLight(0x8888ff,2.5,7); glow.position.set(0,2.2,0.5); group.add(glow);
+  const eyeGlow = new THREE.PointLight(0xaa8800,1.2,4); eyeGlow.position.set(0,3.5,0.3); group.add(eyeGlow);
+  _bossAura(group, 0x8888ff);
+  return _bossHpBar(group, 5.0);
+}
+
+// Boba Fett — Mandalorian armor, T-visor helmet, jetpack, blaster rifle, wrist rockets
+function buildBobaFett(group) {
+  // Legs
+  for (const sx of [-0.32,0.32]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.42,1.1,0.42), pbr(0x2a3820,0.6,0.2));
+    leg.position.set(sx,0.55,0); group.add(leg);
+    // Knee plate
+    const knee = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.25,0.5), pbr(0x4a5c30,0.5,0.3));
+    knee.position.set(sx,0.75,0.2); group.add(knee);
+    const boot = new THREE.Mesh(new THREE.BoxGeometry(0.46,0.38,0.6), pbr(0x1a1e14,0.7,0.2));
+    boot.position.set(sx,0.19,0.06); group.add(boot);
+  }
+  // Torso — green Mandalorian armor over gray undersuit
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(1.55,1.4,0.9), pbr(0x3a5030,0.5,0.3));
+  torso.position.y=1.9; group.add(torso);
+  // Chest armor plate
+  const chestPlate = new THREE.Mesh(new THREE.BoxGeometry(1.1,0.9,0.12), pbr(0x4e6e38,0.4,0.4));
+  chestPlate.position.set(0,2.0,0.5); group.add(chestPlate);
+  // Dent on chest plate (Mandalorian tradition)
+  const dent = new THREE.Mesh(new THREE.SphereGeometry(0.15,6,6), pbr(0x3a5030,0.6,0.3));
+  dent.scale.set(1,0.35,0.5); dent.position.set(0.15,2.05,0.57); group.add(dent);
+  // Left pauldron (red)
+  const shL = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.9), pbr(0xaa2222,0.4,0.3));
+  shL.position.set(-0.95,2.45,0); group.add(shL);
+  // Right pauldron (green)
+  const shR = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.9), pbr(0x4e6e38,0.4,0.3));
+  shR.position.set(0.95,2.45,0); group.add(shR);
+  // Arms
+  const armM = pbr(0x888878,0.6,0.2);
+  for (const sx of [-1.1,1.1]) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.38,1.0,0.38), armM);
+    arm.position.set(sx,1.85,0); arm.rotation.z=sx>0?-0.12:0.12; group.add(arm);
+    // Wrist gauntlet
+    const gaunt = new THREE.Mesh(new THREE.BoxGeometry(0.44,0.32,0.44), pbr(0x666655,0.5,0.4));
+    gaunt.position.set(sx,1.3,0); group.add(gaunt);
+  }
+  // Wrist rocket (left)
+  const rocket = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.06,0.35,6), pbr(0x999900,0.4,0.5));
+  rocket.position.set(-1.35,1.28,0.22); rocket.rotation.x=0.5; group.add(rocket);
+  // Blaster rifle (EE-3) in right hand
+  const stock = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.12,0.8), pbr(0x333322,0.7,0.3));
+  stock.position.set(1.2,1.25,0.4); stock.rotation.z=-0.15; group.add(stock);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.05,0.9,6), pbr(0x666655,0.4,0.6));
+  barrel.position.set(1.3,1.25,0.9); barrel.rotation.x=Math.PI/2; barrel.rotation.z=-0.15; group.add(barrel);
+  // Cape (left shoulder, olive-colored)
+  const capeM = new THREE.MeshStandardMaterial({color:0x5a6040,roughness:0.9,side:THREE.DoubleSide});
+  const cape = new THREE.Mesh(new THREE.PlaneGeometry(0.9,1.6), capeM);
+  cape.position.set(-1.0,1.6,-0.1); cape.rotation.z=-0.2; cape.rotation.y=0.2; group.add(cape);
+  // Jetpack on back
+  const jp = new THREE.Mesh(new THREE.BoxGeometry(0.9,1.1,0.5), pbr(0x333322,0.6,0.3));
+  jp.position.set(0,2.1,-0.7); group.add(jp);
+  for (const sx of [-0.25,0.25]) {
+    const thruster = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.16,0.4,8), pbr(0x444433,0.5,0.5));
+    thruster.position.set(sx,1.65,-0.72); group.add(thruster);
+    // Flame nozzle
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.12,0.3,6),
+      new THREE.MeshStandardMaterial({color:0xff6600,emissive:0xff4400,emissiveIntensity:2.0,transparent:true,opacity:0.7}));
+    flame.position.set(sx,1.35,-0.72); flame.rotation.x=Math.PI; group.add(flame);
+  }
+  // Jetpack missile
+  const missile = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.55,6), pbr(0x888877,0.4,0.5));
+  missile.position.set(0,2.55,-0.95); group.add(missile);
+  // Neck
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.25,0.3,8), pbr(0x777766,0.6,0.3));
+  neck.position.y=2.72; group.add(neck);
+  // T-visor helmet — iconic Mandalorian shape
+  const helmBody = new THREE.Mesh(new THREE.BoxGeometry(1.0,0.85,0.92), pbr(0x3a5028,0.4,0.5));
+  helmBody.position.set(0,3.2,0); group.add(helmBody);
+  // Dome top
+  const helmDome = new THREE.Mesh(new THREE.SphereGeometry(0.54,10,7,0,Math.PI*2,0,Math.PI*0.5), pbr(0x3a5028,0.35,0.5));
+  helmDome.position.set(0,3.5,0); group.add(helmDome);
+  // T-visor (dark horizontal + narrow vertical)
+  const visorH = new THREE.Mesh(new THREE.BoxGeometry(1.02,0.16,0.06), pbr(0x111111,0.1,0.8));
+  visorH.position.set(0,3.22,0.48); group.add(visorH);
+  const visorV = new THREE.Mesh(new THREE.BoxGeometry(0.18,0.38,0.06), pbr(0x111111,0.1,0.8));
+  visorV.position.set(0,3.12,0.48); group.add(visorV);
+  // Visor glow
+  const vGlow = new THREE.PointLight(0x66aaff,1.0,3); vGlow.position.set(0,3.2,0.6); group.add(vGlow);
+  // Rangefinder antenna on right side
+  const rfArm = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.5,0.06), pbr(0x666655,0.5,0.4));
+  rfArm.position.set(0.52,3.62,0.04); group.add(rfArm);
+  const rfSensor = new THREE.Mesh(new THREE.BoxGeometry(0.18,0.12,0.14), pbr(0x888877,0.3,0.6));
+  rfSensor.position.set(0.52,3.4,0.07); group.add(rfSensor);
+  // Blaster glow
+  const bGlow = new THREE.PointLight(0xff6600,1.5,5); bGlow.position.set(0,1.5,0); group.add(bGlow);
+  _bossAura(group, 0x446644);
+  return _bossHpBar(group, 5.0);
+}
+
+// Darth Maul — red/black tattooed face, horns, double-bladed red lightsaber, partial mechanical lower half
+function buildDarthMaul(group) {
+  // Mechanical lower legs (he was cut in half; rebuilt with spider legs, simplified here as metal struts)
+  const mechM = pbr(0x333333,0.4,0.7);
+  for (const sx of [-0.35,0.35]) {
+    const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.12,1.0,6), mechM);
+    strut.position.set(sx,0.5,0); group.add(strut);
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.28,0.12,0.55), mechM);
+    foot.position.set(sx,0.06,0.1); group.add(foot);
+  }
+  // Upper legs / lower robe
+  const robeM = pbr(0x100808,0.85,0.0);
+  const lowerRobe = new THREE.Mesh(new THREE.CylinderGeometry(0.65,0.85,1.0,10), robeM);
+  lowerRobe.position.y=1.2; group.add(lowerRobe);
+  // Torso — black robes with red Sith tattoo stripes
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(1.45,1.4,0.85), pbr(0x0d0303,0.8,0.0));
+  torso.position.y=2.05; group.add(torso);
+  // Red tattoo stripes across torso
+  const tattM = new THREE.MeshBasicMaterial({color:0xcc1100});
+  for (let i=0;i<4;i++) {
+    const s = new THREE.Mesh(new THREE.BoxGeometry(1.46,0.06,0.06), tattM);
+    s.position.set(0,1.7+i*0.32,0.44); group.add(s);
+  }
+  // Shoulders
+  for (const sx of [-0.88,0.88]) {
+    const sh = new THREE.Mesh(new THREE.BoxGeometry(0.42,0.4,0.85), pbr(0x0d0303,0.7,0.0));
+    sh.position.set(sx,2.58,0); group.add(sh);
+  }
+  // Arms — powerful, with red tattoo bands
+  for (const sx of [-1.05,1.05]) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.38,1.05,0.38), pbr(0x0d0303,0.7,0.0));
+    arm.position.set(sx,1.95,0); arm.rotation.z=sx>0?-0.15:0.15; group.add(arm);
+    for (let b=0;b<2;b++) {
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.22,0.04,6,10), pbr(0xcc1100,0.5,0.2));
+      band.position.set(sx,1.72+b*0.28,0); band.rotation.x=Math.PI/2; group.add(band);
+    }
+    const glove = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.35,0.35), pbr(0x060606,0.6,0.3));
+    glove.position.set(sx,1.36,0); group.add(glove);
+  }
+  // Neck
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.22,0.3,8), pbr(0x661100,0.7,0.0));
+  neck.position.y=2.87; group.add(neck);
+  // Head — split red/black Zabrak patterns
+  const headRed = new THREE.Mesh(new THREE.SphereGeometry(0.5,10,8), pbr(0xcc1100,0.6,0.0));
+  headRed.position.set(0,3.32,0); group.add(headRed);
+  // Black tattoo overlay — alternating panels (simplified as flat planes)
+  const blkM = pbr(0x000000,0.8,0.0);
+  for (let i=0;i<6;i++) {
+    const a = (i/6)*Math.PI*2;
+    const tatP = new THREE.Mesh(new THREE.PlaneGeometry(0.35,0.55), new THREE.MeshBasicMaterial({color:0x000000,side:THREE.DoubleSide}));
+    tatP.position.set(Math.sin(a)*0.46, 3.32+Math.cos(a)*0.12, Math.cos(a)*0.46);
+    tatP.lookAt(new THREE.Vector3(0,3.32,0)); group.add(tatP);
+  }
+  // Yellow eyes (Sith)
+  const eyeM = new THREE.MeshStandardMaterial({color:0xffcc00,emissive:0xffaa00,emissiveIntensity:2.5});
+  for (const sx of [-0.2,0.2]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.1,6,6), eyeM);
+    eye.position.set(sx,3.38,0.44); group.add(eye);
+  }
+  // Red pupils
+  const pupilM = new THREE.MeshBasicMaterial({color:0xff0000});
+  for (const sx of [-0.2,0.2]) {
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.05,4,4), pupilM);
+    pupil.position.set(sx,3.38,0.49); group.add(pupil);
+  }
+  // Zabrak horns — 8 short cone horns around crown
+  const hornM = pbr(0x331100,0.7,0.1);
+  const hornPositions = [
+    [0,0.52,-0.1],[0.28,0.45,0.18],[-0.28,0.45,0.18],[0.38,0.3,-0.08],[-0.38,0.3,-0.08],
+    [0.2,0.3,-0.3],[-0.2,0.3,-0.3],[0,0.28,0.4]
+  ];
+  hornPositions.forEach(([hx,hy,hz]) => {
+    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.06,0.28,6), hornM);
+    horn.position.set(hx,3.32+hy,hz);
+    horn.lookAt(new THREE.Vector3(hx*3,3.32+hy*3+0.5,hz*3));
+    group.add(horn);
+  });
+  // Double-bladed lightsaber — held horizontally in both hands
+  const saberHilt = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,1.0,8), pbr(0x777777,0.2,0.9));
+  saberHilt.rotation.z=Math.PI/2; saberHilt.position.set(0,1.38,0.3); group.add(saberHilt);
+  // Both blades
+  for (const sx of [-1,1]) {
+    const blade = new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,2.5,8),
+      new THREE.MeshStandardMaterial({color:0xff0000,emissive:0xff0000,emissiveIntensity:3.5,transparent:true,opacity:0.9}));
+    blade.rotation.z=Math.PI/2; blade.position.set(sx*1.75,1.38,0.3); group.add(blade);
+    // Blade glow
+    const bGlow = new THREE.PointLight(0xff0000,2.5,4.5); bGlow.position.set(sx*2.0,1.38,0.3); group.add(bGlow);
+  }
+  // Eye glow
+  const eyeGlow = new THREE.PointLight(0xff6600,1.5,4); eyeGlow.position.set(0,3.35,0.5); group.add(eyeGlow);
+  _bossAura(group, 0xcc1100);
+  return _bossHpBar(group, 5.0);
+}
+
+// Dispatch to correct villain builder by index
+function buildBossMesh(group, col, bossIdx) {
+  const builders = [buildDarthVader, buildPalpatine, buildBobaFett, buildDarthMaul];
+  return builders[bossIdx % 4](group);
 }
 
 function spawnBoss() {
