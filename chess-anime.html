@@ -862,8 +862,9 @@ function render() {
 }
 
 // ─── Cell click ──────────────────────────────────────────────────────────────
+let animating = false;
 function onCellClick(r, c) {
-  if (promoCallback) return;
+  if (promoCallback || animating) return;
 
   if (selected) {
     const vm = validMoves.find(([vr,vc])=>vr===r&&vc===c);
