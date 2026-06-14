@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Shooter</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+<script type="module">
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x202030);
+
+const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+);
+
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Light
+const light = new THREE.DirectionalLight(0xffffff, 2);
+light.position.set(5, 10, 5);
+scene.add(light);
+
+// Floor
+const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(50, 50),
+    new THREE.MeshStandardMaterial({ color: 0x444444 })
+);
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+
+// Player
+const player = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshStandardMaterial({ color: 0x00ff00 })
+);
+player.position.y = 0.5;
+scene.add(player);
+
+camera.position.set(0, 8, 10);
+camera.lookAt(player.position);
+
+const bullets = [];
+const enemies = [];
+const keys = {};
+
+document.addEventListener("keydown", e => {
+    keys[e.key] = true;
+
+    if (e.code === "Space") {
+        const bullet = new THREE.Mesh(
+            new THREE.SphereGeometry(0.15),
+            new THREE.MeshBasicMaterial({ color: 0xffff00 })
+        );
+
+        bullet.position.copy(player.position);
+        scene.add(bullet);
+
+        bullets.push(bullet);
+    }
+});
+
+document.addEventListener("keyup", e => {
+    keys[e.key] = false;
+});
+
+// Spawn enemies
+setInterval(() => {
+    const enemy = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshStandardMaterial({ color: 0xff0000 })
+    );
+
+    enemy.position.set(
+        (Math.random() - 0.5) * 20,
+        0.5,
+        -20
+    );
+
+    scene.add(enemy);
+    enemies.push(enemy);
+
+}, 1500);
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Player movement
+    if (keys["a"]) player.position.x -= 0.1;
+    if (keys["d"]) player.position.x += 0.1;
+
+    // Move bullets
+    bullets.forEach((bullet, bi) => {
+        bullet.position.z -= 0.4;
+
+        enemies.forEach((enemy, ei) => {
+            if (
+                bullet.position.distanceTo(enemy.position) < 0.7
+            ) {
+                scene.remove(enemy);
+                scene.remove(bullet);
+
+                enemies.splice(ei, 1);
+                bullets.splice(bi, 1);
+            }
+        });
+    });
+
+    // Move enemies
+    enemies.forEach(enemy => {
+        enemy.position.z += 0.05;
+    });
+
+    renderer.render(scene, camera);
+}
+
+animate();
+</script>
+
+</body>
+</html>

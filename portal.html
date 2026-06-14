@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCADE VAULT</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+
+  :root {
+    --red: #ff2244;
+    --blue: #00f0ff;
+    --purple: #bf00ff;
+    --yellow: #ffee00;
+    --green: #00ff88;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #030308;
+    color: #e0e0ff;
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ── CURSOR ── */
+  #cursor {
+    position: fixed;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--blue);
+    box-shadow: 0 0 12px var(--blue), 0 0 30px var(--blue);
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: transform 0.05s, width 0.2s, height 0.2s, background 0.2s;
+  }
+  #cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--blue);
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%,-50%);
+    transition: transform 0.12s ease-out, width 0.2s, height 0.2s, border-color 0.2s;
+    opacity: 0.6;
+  }
+
+  /* ── FIXED LAYERS ── */
+  #bg-canvas   { position: fixed; inset: 0; z-index: 0; }
+  #vfx-canvas  { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+
+  /* scanlines */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px, transparent 2px,
+      rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+    z-index: 900;
+  }
+
+  /* vignette */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center,
+      transparent 40%,
+      rgba(0,0,0,0.85) 100%
+    );
+    pointer-events: none;
+    z-index: 901;
+  }
+
+  /* ── LAYOUT ── */
+  .content { position: relative; z-index: 10; }
+
+  /* ── HEADER ── */
+  header {
+    text-align: center;
+    padding: 80px 20px 20px;
+  }
+
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(2.8rem, 9vw, 6.5rem);
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+    position: relative;
+    display: inline-block;
+    animation: logo-breathe 4s ease-in-out infinite;
+  }
+
+  @keyframes logo-breathe {
+    0%,100% { text-shadow: 0 0 20px #fff4, 0 0 60px var(--red), 0 0 100px var(--red); }
+    50%      { text-shadow: 0 0 40px #fffa, 0 0 80px var(--red), 0 0 140px var(--red); }
+  }
+
+  .logo-glitch {
+    position: absolute;
+    inset: 0;
+    color: var(--red);
+    animation: glitch-a 5s infinite steps(1);
+    clip-path: polygon(0 20%, 100% 20%, 100% 40%, 0 40%);
+    pointer-events: none;
+  }
+  .logo-glitch2 {
+    position: absolute;
+    inset: 0;
+    color: var(--blue);
+    animation: glitch-b 5s infinite steps(1);
+    clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%);
+    pointer-events: none;
+  }
+
+  @keyframes glitch-a {
+    0%,89%,100% { transform: translate(0); opacity:0; }
+    90% { transform: translate(-8px,0); opacity:1; }
+    92% { transform: translate(8px,-2px); opacity:1; }
+    94% { transform: translate(-4px,1px); opacity:1; }
+    96% { transform: translate(0); opacity:0; }
+  }
+  @keyframes glitch-b {
+    0%,88%,100% { transform: translate(0); opacity:0; }
+    89% { transform: translate(8px,2px); opacity:1; }
+    91% { transform: translate(-8px,-1px); opacity:1; }
+    93% { transform: translate(4px,0); opacity:1; }
+    95% { transform: translate(0); opacity:0; }
+  }
+
+  /* subtitle ticker */
+  .ticker-wrap {
+    overflow: hidden;
+    width: 100%;
+    margin-top: 18px;
+    border-top: 1px solid #1a1a33;
+    border-bottom: 1px solid #1a1a33;
+    padding: 8px 0;
+    position: relative;
+  }
+  .ticker-wrap::before, .ticker-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 80px;
+    z-index: 2;
+  }
+  .ticker-wrap::before { left: 0; background: linear-gradient(90deg,#030308,transparent); }
+  .ticker-wrap::after  { right: 0; background: linear-gradient(-90deg,#030308,transparent); }
+
+  .ticker {
+    display: flex;
+    gap: 60px;
+    animation: ticker-scroll 18s linear infinite;
+    white-space: nowrap;
+    width: max-content;
+  }
+  .ticker span {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--blue);
+    text-shadow: 0 0 8px var(--blue);
+    text-transform: uppercase;
+  }
+  .ticker span.red  { color: var(--red);    text-shadow: 0 0 8px var(--red); }
+  .ticker span.yel  { color: var(--yellow); text-shadow: 0 0 8px var(--yellow); }
+
+  @keyframes ticker-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    text-align: center;
+    margin: 60px 0 50px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.5em;
+    color: #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+  .section-label::before, .section-label::after {
+    content: '';
+    flex: 1;
+    max-width: 240px;
+    height: 1px;
+    background: linear-gradient(90deg,transparent,#2a2a4a);
+  }
+  .section-label::after { background: linear-gradient(90deg,#2a2a4a,transparent); }
+
+  /* ── CARDS ── */
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 30px 100px;
+    perspective: 1400px;
+  }
+
+  .game-card {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.3s cubic-bezier(.25,.8,.25,1);
+  }
+
+  .card-shine {
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s;
+    background: radial-gradient(circle at var(--mx,50%) var(--my,50%),
+      rgba(255,255,255,0.12) 0%,
+      transparent 60%
+    );
+  }
+  .game-card:hover .card-shine { opacity: 1; }
+
+  .card-inner {
+    background: #08081a;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #1a1a33;
+    position: relative;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .game-card:hover .card-inner {
+    border-color: var(--accent);
+    box-shadow:
+      0 0 0 1px var(--accent),
+      0 0 30px color-mix(in srgb, var(--accent) 35%, transparent),
+      0 0 80px color-mix(in srgb, var(--accent) 12%, transparent),
+      0 40px 80px rgba(0,0,0,0.7);
+  }
+
+  /* holographic top bar */
+  .card-inner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent), #fff, var(--accent), transparent);
+    z-index: 5;
+    transition: left 0s;
+  }
+  .game-card:hover .card-inner::before {
+    left: 100%;
+    transition: left 0.6s ease;
+  }
+
+  /* bottom glow line */
+  .card-inner::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .game-card:hover .card-inner::after { opacity: 1; }
+
+  .card-1 { --accent: var(--red); }
+  .card-2 { --accent: var(--blue); }
+  .card-3 { --accent: var(--purple); }
+
+  /* ── THUMB ── */
+  .card-thumb {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background: #040410;
+  }
+
+  /* hexagon grid bg */
+  .card-thumb::before {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    background-image:
+      repeating-linear-gradient(60deg, var(--accent) 0, var(--accent) 1px, transparent 0, transparent 50%),
+      repeating-linear-gradient(120deg, var(--accent) 0, var(--accent) 1px, transparent 0, transparent 50%),
+      repeating-linear-gradient(180deg, var(--accent) 0, var(--accent) 1px, transparent 0, transparent 50%);
+    background-size: 40px 70px;
+    opacity: 0.04;
+    animation: hex-drift 8s linear infinite;
+  }
+  @keyframes hex-drift {
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(70px); }
+  }
+
+  .thumb-icon {
+    font-size: 5.5rem;
+    position: relative;
+    z-index: 3;
+    transition: transform 0.3s, filter 0.3s;
+    filter: drop-shadow(0 0 18px var(--accent));
+    animation: icon-float 3s ease-in-out infinite;
+  }
+  @keyframes icon-float {
+    0%,100% { transform: translateY(0px); }
+    50%      { transform: translateY(-10px); }
+  }
+  .game-card:hover .thumb-icon {
+    filter: drop-shadow(0 0 40px var(--accent)) drop-shadow(0 0 80px var(--accent));
+    animation: none;
+    transform: scale(1.2) translateY(-5px);
+  }
+
+  /* plasma rings */
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid var(--accent);
+    animation: ring-out 2.4s ease-out infinite;
+    opacity: 0;
+  }
+  .ring:nth-child(2) { animation-delay: 0.8s; }
+  .ring:nth-child(3) { animation-delay: 1.6s; }
+  @keyframes ring-out {
+    0%   { width:50px; height:50px; opacity:0.5; }
+    100% { width:300px; height:300px; opacity:0; }
+  }
+
+  /* corner decorations */
+  .card-corner {
+    position: absolute;
+    width: 16px; height: 16px;
+    border-color: var(--accent);
+    border-style: solid;
+    opacity: 0.6;
+    transition: opacity 0.3s, width 0.3s, height 0.3s;
+  }
+  .game-card:hover .card-corner { opacity: 1; width: 22px; height: 22px; }
+  .cc-tl { top:8px; left:8px; border-width: 2px 0 0 2px; }
+  .cc-tr { top:8px; right:8px; border-width: 2px 2px 0 0; }
+  .cc-bl { bottom:8px; left:8px; border-width: 0 0 2px 2px; }
+  .cc-br { bottom:8px; right:8px; border-width: 0 2px 2px 0; }
+
+  /* ── CARD BODY ── */
+  .card-body { padding: 22px 22px 14px; }
+
+  .card-tag {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-shadow: 0 0 8px var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .card-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px rgba(255,255,255,0.3);
+  }
+
+  .card-desc {
+    font-size: 0.87rem;
+    color: #5a5a7a;
+    line-height: 1.65;
+  }
+
+  /* stat bar */
+  .card-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 14px;
+  }
+  .stat {
+    flex: 1;
+  }
+  .stat-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    color: #444;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-family: 'Orbitron', sans-serif;
+  }
+  .stat-bar-bg {
+    height: 3px;
+    background: #111122;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .stat-bar {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    transition: width 0.8s ease;
+    width: 0;
+  }
+  .game-card:hover .stat-bar { width: var(--w) !important; }
+
+  /* ── FOOTER ── */
+  .card-footer {
+    padding: 14px 22px;
+    border-top: 1px solid #0f0f22;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .play-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: gap 0.2s;
+  }
+  .game-card:hover .play-btn { gap: 16px; }
+
+  .play-arrow {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+  .game-card:hover .play-arrow {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 0 18px var(--accent);
+    transform: scale(1.15);
+  }
+
+  .card-badge {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    padding: 4px 10px;
+    border: 1px solid #1a1a33;
+    color: #333;
+    border-radius: 2px;
+  }
+
+  /* ── VR BANNER ── */
+  .vr-banner {
+    max-width: 860px;
+    margin: 0 auto 80px;
+    padding: 0 30px;
+  }
+
+  .vr-box {
+    border-radius: 10px;
+    padding: 30px 36px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    position: relative;
+    overflow: hidden;
+    background: #07071a;
+  }
+
+  .vr-box::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    padding: 1px;
+    background: linear-gradient(90deg, var(--purple), var(--blue), var(--purple));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    background-size: 200%;
+    animation: border-run 3s linear infinite;
+  }
+
+  @keyframes border-run {
+    0%   { background-position: 0%; }
+    100% { background-position: 200%; }
+  }
+
+  /* bg pulse */
+  .vr-box::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(191,0,255,0.07) 0%, transparent 60%);
+    animation: vr-pulse 3s ease-in-out infinite;
+  }
+  @keyframes vr-pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.3; }
+  }
+
+  .vr-icon {
+    font-size: 3rem;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 14px var(--purple));
+    animation: icon-float 3s ease-in-out infinite;
+    position: relative; z-index: 2;
+  }
+  .vr-text { position: relative; z-index: 2; }
+  .vr-text h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    color: var(--purple);
+    text-shadow: 0 0 12px var(--purple);
+    margin-bottom: 8px;
+  }
+  .vr-text p { font-size: 0.9rem; color: #667; line-height: 1.6; }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative;
+    z-index: 10;
+    border-top: 1px solid #0e0e22;
+    background: #030308;
+  }
+
+  .footer-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 50px 30px 36px;
+    border-bottom: 1px solid #0e0e22;
+  }
+
+  .footer-col h4 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--blue);
+    text-shadow: 0 0 8px var(--blue);
+    margin-bottom: 16px;
+  }
+
+  .footer-col p, .footer-col a {
+    display: block;
+    font-size: 0.85rem;
+    color: #445;
+    line-height: 2;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-col a:hover { color: var(--blue); }
+
+  .footer-brand {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 20px var(--red), 0 0 50px var(--red);
+    margin-bottom: 10px;
+  }
+
+  .footer-tagline {
+    font-size: 0.78rem;
+    color: #334;
+    line-height: 1.7;
+  }
+
+  .footer-credit {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .credit-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 0 12px var(--purple);
+  }
+
+  .credit-info { line-height: 1.4; }
+  .credit-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    color: #ccd;
+    letter-spacing: 0.05em;
+  }
+  .credit-nick {
+    font-size: 0.7rem;
+    color: var(--purple);
+    text-shadow: 0 0 6px var(--purple);
+    letter-spacing: 0.05em;
+  }
+
+  .footer-bottom {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 18px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .footer-copy {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: #1e1e30;
+  }
+
+  .footer-domain {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--blue);
+    text-shadow: 0 0 8px var(--blue);
+    opacity: 0.7;
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    body { cursor: auto; }
+    #cursor, #cursor-ring { display: none; }
+
+    header { padding: 50px 16px 16px; }
+
+    .logo { font-size: clamp(2rem, 10vw, 3.5rem); }
+
+    .section-label { margin: 40px 0 30px; font-size: 0.6rem; }
+
+    .games-grid {
+      grid-template-columns: 1fr;
+      gap: 24px;
+      padding: 0 16px 80px;
+    }
+
+    .game-card { transform: none !important; }
+    .game-card:hover { transform: none !important; }
+
+    .card-stats { display: none; }
+
+    .vr-banner { padding: 0 16px; margin-bottom: 50px; }
+    .vr-box { flex-direction: column; text-align: center; padding: 24px 20px; gap: 16px; }
+
+    .footer-top {
+      grid-template-columns: 1fr;
+      gap: 30px;
+      padding: 36px 20px 28px;
+    }
+
+    .footer-bottom {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 16px 20px;
+    }
+
+    .ticker-wrap { display: none; }
+
+    .card-thumb svg { height: 160px; }
+  }
+
+  @media (max-width: 480px) {
+    .logo { font-size: 2rem; }
+    .games-grid { padding: 0 12px 60px; }
+    .footer-top { padding: 28px 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- cursors -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- bg layers -->
+<canvas id="bg-canvas"></canvas>
+<canvas id="vfx-canvas"></canvas>
+
+<div class="content">
+  <header>
+    <div style="position:relative;display:inline-block;">
+      <div class="logo">ARCADE VAULT<span class="logo-glitch">ARCADE VAULT</span><span class="logo-glitch2">ARCADE VAULT</span></div>
+    </div>
+    <div class="ticker-wrap" style="margin-top:24px;">
+      <div class="ticker">
+        <span>&#9632; Nuclear Throne 3D</span>
+        <span class="red">&#9632; FPS Shooter</span>
+        <span class="yel">&#9632; 3D Shooter</span>
+        <span>&#9632; Select your game</span>
+        <span class="red">&#9632; Enter the arena</span>
+        <span class="yel">&#9632; Play now</span>
+        <!-- duplicate for seamless loop -->
+        <span>&#9632; Nuclear Throne 3D</span>
+        <span class="red">&#9632; FPS Shooter</span>
+        <span class="yel">&#9632; 3D Shooter</span>
+        <span>&#9632; Select your game</span>
+        <span class="red">&#9632; Enter the arena</span>
+        <span class="yel">&#9632; Play now</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="section-label">GAME SELECT</div>
+
+  <main class="games-grid">
+
+    <!-- Card 1 -->
+    <a class="game-card card-1" href="http://localhost:5005/index.html" target="_blank">
+      <div class="card-shine"></div>
+      <div class="card-inner">
+        <div class="card-corner cc-tl"></div>
+        <div class="card-corner cc-tr"></div>
+        <div class="card-corner cc-bl"></div>
+        <div class="card-corner cc-br"></div>
+        <!-- TATOOINE -->
+        <div class="card-thumb" style="background:none;padding:0;">
+          <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
+            <defs>
+              <radialGradient id="sun1" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#fff7cc"/>
+                <stop offset="40%" stop-color="#ffcc44"/>
+                <stop offset="100%" stop-color="#ff8800" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="sun2" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#fff0aa"/>
+                <stop offset="40%" stop-color="#ffaa22"/>
+                <stop offset="100%" stop-color="#ff6600" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="tato-sky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#1a0a00"/>
+                <stop offset="40%" stop-color="#4a1800"/>
+                <stop offset="75%" stop-color="#c24a00"/>
+                <stop offset="100%" stop-color="#e87020"/>
+              </linearGradient>
+              <linearGradient id="tato-sand" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#c8853a"/>
+                <stop offset="100%" stop-color="#6b3a10"/>
+              </linearGradient>
+              <filter id="glow-sun">
+                <feGaussianBlur stdDeviation="4" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <clipPath id="thumb-clip1"><rect width="400" height="200" rx="0"/></clipPath>
+            </defs>
+            <g clip-path="url(#thumb-clip1)">
+              <!-- sky -->
+              <rect width="400" height="200" fill="url(#tato-sky)"/>
+              <!-- stars -->
+              <circle cx="30" cy="20" r="0.8" fill="#fff" opacity="0.7"/>
+              <circle cx="80" cy="10" r="0.6" fill="#fff" opacity="0.5"/>
+              <circle cx="140" cy="25" r="0.9" fill="#fff" opacity="0.6"/>
+              <circle cx="200" cy="8" r="0.7" fill="#fff" opacity="0.8"/>
+              <circle cx="260" cy="18" r="0.6" fill="#fff" opacity="0.5"/>
+              <circle cx="320" cy="12" r="0.8" fill="#fff" opacity="0.7"/>
+              <circle cx="370" cy="22" r="0.6" fill="#fff" opacity="0.6"/>
+              <circle cx="55" cy="40" r="0.5" fill="#fff" opacity="0.4"/>
+              <circle cx="170" cy="45" r="0.5" fill="#fff" opacity="0.4"/>
+              <circle cx="340" cy="38" r="0.5" fill="#fff" opacity="0.4"/>
+              <!-- twin suns glow halos -->
+              <circle cx="110" cy="70" r="38" fill="url(#sun1)" opacity="0.5"/>
+              <circle cx="155" cy="58" r="30" fill="url(#sun2)" opacity="0.45"/>
+              <!-- twin suns -->
+              <circle cx="110" cy="70" r="18" fill="#ffdd66" filter="url(#glow-sun)"/>
+              <circle cx="155" cy="58" r="13" fill="#ffcc44" filter="url(#glow-sun)"/>
+              <!-- atmosphere glow on horizon -->
+              <ellipse cx="200" cy="142" rx="260" ry="40" fill="#ff7722" opacity="0.18"/>
+              <!-- sand dunes -->
+              <ellipse cx="-20" cy="180" rx="120" ry="55" fill="#b06828"/>
+              <ellipse cx="100" cy="175" rx="130" ry="45" fill="#c87830"/>
+              <ellipse cx="260" cy="178" rx="150" ry="50" fill="#b86020"/>
+              <ellipse cx="430" cy="172" rx="110" ry="48" fill="#a05018"/>
+              <!-- sand ground -->
+              <rect x="0" y="158" width="400" height="42" fill="url(#tato-sand)"/>
+              <!-- dune ridge highlights -->
+              <path d="M0,158 Q60,148 120,158 Q180,168 250,152 Q310,140 400,155" fill="none" stroke="#e8993a" stroke-width="1.5" opacity="0.6"/>
+              <!-- AT-AT walker silhouette -->
+              <!-- body -->
+              <rect x="268" y="108" width="52" height="30" rx="4" fill="#1a0e04"/>
+              <!-- head -->
+              <rect x="278" y="96" width="32" height="18" rx="3" fill="#1a0e04"/>
+              <!-- head cannons -->
+              <rect x="275" y="101" width="14" height="3" rx="1" fill="#0a0602"/>
+              <rect x="275" y="107" width="14" height="3" rx="1" fill="#0a0602"/>
+              <!-- neck -->
+              <rect x="287" y="108" width="8" height="6" fill="#150b03"/>
+              <!-- legs -->
+              <line x1="278" y1="138" x2="268" y2="158" stroke="#1a0e04" stroke-width="5" stroke-linecap="round"/>
+              <line x1="290" y1="138" x2="282" y2="158" stroke="#1a0e04" stroke-width="5" stroke-linecap="round"/>
+              <line x1="302" y1="138" x2="308" y2="158" stroke="#1a0e04" stroke-width="5" stroke-linecap="round"/>
+              <line x1="314" y1="138" x2="322" y2="158" stroke="#1a0e04" stroke-width="5" stroke-linecap="round"/>
+              <!-- feet -->
+              <rect x="260" y="155" width="18" height="6" rx="2" fill="#1a0e04"/>
+              <rect x="275" y="155" width="16" height="6" rx="2" fill="#1a0e04"/>
+              <rect x="302" y="155" width="16" height="6" rx="2" fill="#1a0e04"/>
+              <rect x="316" y="155" width="18" height="6" rx="2" fill="#1a0e04"/>
+              <!-- second AT-AT (distant, smaller) -->
+              <rect x="68" y="128" width="30" height="17" rx="3" fill="#150b03" opacity="0.8"/>
+              <rect x="74" y="121" width="18" height="10" rx="2" fill="#150b03" opacity="0.8"/>
+              <line x1="74" y1="145" x2="68" y2="158" stroke="#150b03" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+              <line x1="82" y1="145" x2="78" y2="158" stroke="#150b03" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+              <line x1="90" y1="145" x2="94" y2="158" stroke="#150b03" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+              <line x1="98" y1="145" x2="103" y2="158" stroke="#150b03" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+              <!-- laser bolt from AT-AT -->
+              <line x1="264" y1="103" x2="230" y2="118" stroke="#ff4400" stroke-width="2" opacity="0.85"/>
+              <line x1="264" y1="103" x2="230" y2="118" stroke="#ffaa44" stroke-width="0.8" opacity="0.7"/>
+              <!-- dust cloud at impact -->
+              <ellipse cx="228" cy="120" rx="12" ry="6" fill="#cc6600" opacity="0.5"/>
+              <!-- small figures (rebels) silhouettes -->
+              <rect x="190" y="150" width="3" height="8" rx="1" fill="#0a0602"/>
+              <rect x="200" y="148" width="3" height="8" rx="1" fill="#0a0602"/>
+              <rect x="210" y="151" width="3" height="7" rx="1" fill="#0a0602"/>
+              <!-- label -->
+              <text x="8" y="194" font-family="monospace" font-size="8" fill="#ff8822" opacity="0.8" letter-spacing="2">TATOOINE</text>
+            </g>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-tag">&#11041; Top-Down &bull; Survival &bull; 3D</div>
+          <div class="card-title">Nuclear Throne 3D</div>
+          <div class="card-desc">Blast through mutants in a post-apocalyptic wasteland. Survive waves, grab weapons, reach the throne.</div>
+          <div class="card-stats">
+            <div class="stat">
+              <div class="stat-label">Intensity</div>
+              <div class="stat-bar-bg"><div class="stat-bar" style="--w:90%"></div></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Speed</div>
+              <div class="stat-bar-bg"><div class="stat-bar" style="--w:75%"></div></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Chaos</div>
+              <div class="stat-bar-bg"><div class="stat-bar" style="--w:95%"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="play-btn"><span>Play Now</span><div class="play-arrow">&#8594;</div></div>
+          <span class="card-badge">3D</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Card 2 -->
+    <a class="game-card card-2" href="fps-shooter.html">
+      <div class="card-shine"></div>
+      <div class="card-inner">
+        <div class="card-corner cc-tl"></div>
+        <div class="card-corner cc-tr"></div>
+        <div class="card-corner cc-bl"></div>
+        <div class="card-corner cc-br"></div>
+        <!-- SPACE BATTLE -->
+        <div class="card-thumb" style="background:none;padding:0;">
+          <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
+            <defs>
+              <radialGradient id="death-star-grad" cx="40%" cy="40%" r="60%">
+                <stop offset="0%" stop-color="#888"/>
+                <stop offset="100%" stop-color="#222"/>
+              </radialGradient>
+              <radialGradient id="planet-grad" cx="35%" cy="35%" r="65%">
+                <stop offset="0%" stop-color="#4466aa"/>
+                <stop offset="60%" stop-color="#223366"/>
+                <stop offset="100%" stop-color="#0a1020"/>
+              </radialGradient>
+              <linearGradient id="space-bg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#000005"/>
+                <stop offset="100%" stop-color="#04001a"/>
+              </linearGradient>
+              <filter id="laser-glow">
+                <feGaussianBlur stdDeviation="2" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="beam-glow">
+                <feGaussianBlur stdDeviation="5" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <clipPath id="thumb-clip2"><rect width="400" height="200"/></clipPath>
+            </defs>
+            <g clip-path="url(#thumb-clip2)">
+              <!-- deep space -->
+              <rect width="400" height="200" fill="url(#space-bg)"/>
+              <!-- nebula bg -->
+              <ellipse cx="300" cy="80" rx="180" ry="100" fill="#1a0050" opacity="0.4"/>
+              <ellipse cx="80" cy="140" rx="120" ry="70" fill="#001a40" opacity="0.3"/>
+              <!-- stars -->
+              <circle cx="12" cy="15" r="0.8" fill="#fff" opacity="0.9"/>
+              <circle cx="45" cy="8" r="0.6" fill="#fff" opacity="0.7"/>
+              <circle cx="90" cy="30" r="1" fill="#fff" opacity="0.8"/>
+              <circle cx="130" cy="12" r="0.7" fill="#fff" opacity="0.9"/>
+              <circle cx="175" cy="22" r="0.6" fill="#fff" opacity="0.6"/>
+              <circle cx="220" cy="5" r="0.9" fill="#fff" opacity="0.8"/>
+              <circle cx="265" cy="18" r="0.7" fill="#fff" opacity="0.7"/>
+              <circle cx="310" cy="9" r="0.8" fill="#fff" opacity="0.9"/>
+              <circle cx="355" cy="25" r="0.6" fill="#fff" opacity="0.6"/>
+              <circle cx="385" cy="12" r="0.8" fill="#fff" opacity="0.8"/>
+              <circle cx="28" cy="55" r="0.6" fill="#aac" opacity="0.7"/>
+              <circle cx="72" cy="70" r="0.5" fill="#aac" opacity="0.5"/>
+              <circle cx="148" cy="48" r="0.7" fill="#fff" opacity="0.7"/>
+              <circle cx="192" cy="65" r="0.5" fill="#aac" opacity="0.6"/>
+              <circle cx="240" cy="42" r="0.8" fill="#fff" opacity="0.8"/>
+              <circle cx="290" cy="58" r="0.6" fill="#aac" opacity="0.6"/>
+              <circle cx="338" cy="45" r="0.7" fill="#fff" opacity="0.7"/>
+              <circle cx="375" cy="60" r="0.5" fill="#aac" opacity="0.5"/>
+              <circle cx="20" cy="100" r="0.6" fill="#fff" opacity="0.5"/>
+              <circle cx="58" cy="115" r="0.5" fill="#fff" opacity="0.4"/>
+              <circle cx="108" cy="90" r="0.7" fill="#fff" opacity="0.6"/>
+              <circle cx="158" cy="105" r="0.5" fill="#fff" opacity="0.5"/>
+              <circle cx="350" cy="100" r="0.6" fill="#fff" opacity="0.6"/>
+              <circle cx="395" cy="85" r="0.5" fill="#fff" opacity="0.5"/>
+              <!-- distant planet -->
+              <circle cx="60" cy="155" r="38" fill="url(#planet-grad)" opacity="0.85"/>
+              <path d="M26,148 Q60,138 94,148" fill="none" stroke="#6688cc" stroke-width="1.5" opacity="0.3"/>
+              <path d="M30,158 Q60,150 90,158" fill="none" stroke="#4466aa" stroke-width="1" opacity="0.2"/>
+              <!-- planet edge shadow -->
+              <circle cx="60" cy="155" r="38" fill="none" stroke="#000" stroke-width="3" opacity="0.5"/>
+              <!-- Death Star (partial, edge of frame) -->
+              <circle cx="345" cy="40" r="72" fill="url(#death-star-grad)"/>
+              <!-- death star trench -->
+              <path d="M278,70 Q345,65 413,72" fill="none" stroke="#555" stroke-width="2.5" opacity="0.7"/>
+              <path d="M276,74 Q345,69 414,76" fill="none" stroke="#444" stroke-width="1" opacity="0.5"/>
+              <!-- death star surface lines -->
+              <path d="M285,50 Q320,48 355,52" fill="none" stroke="#555" stroke-width="0.8" opacity="0.4"/>
+              <path d="M290,58 Q330,56 365,60" fill="none" stroke="#555" stroke-width="0.8" opacity="0.4"/>
+              <path d="M340,20 Q342,42 338,62" fill="none" stroke="#555" stroke-width="0.8" opacity="0.4"/>
+              <path d="M360,15 Q362,38 358,60" fill="none" stroke="#555" stroke-width="0.8" opacity="0.4"/>
+              <!-- superlaser dish -->
+              <circle cx="295" cy="55" r="14" fill="#333" stroke="#666" stroke-width="1"/>
+              <circle cx="295" cy="55" r="9" fill="#2a2a2a" stroke="#777" stroke-width="0.8"/>
+              <circle cx="295" cy="55" r="4" fill="#444"/>
+              <!-- superlaser BEAM firing -->
+              <line x1="286" y1="55" x2="60" y2="155" stroke="#22ff44" stroke-width="8" opacity="0.15" filter="url(#beam-glow)"/>
+              <line x1="286" y1="55" x2="60" y2="155" stroke="#44ff66" stroke-width="4" opacity="0.3" filter="url(#beam-glow)"/>
+              <line x1="286" y1="55" x2="60" y2="155" stroke="#aaffbb" stroke-width="1.5" opacity="0.8"/>
+              <!-- explosion at planet impact -->
+              <circle cx="60" cy="155" r="50" fill="#88ff44" opacity="0.07"/>
+              <circle cx="60" cy="155" r="42" fill="#44ff22" opacity="0.06"/>
+              <!-- X-Wing #1 -->
+              <g transform="translate(160,80) rotate(-15)">
+                <rect x="-10" y="-3" width="22" height="5" rx="2" fill="#ccd"/>
+                <!-- s-foils -->
+                <line x1="-4" y1="-3" x2="-14" y2="-14" stroke="#aab" stroke-width="3" stroke-linecap="round"/>
+                <line x1="-4" y1="8" x2="-14" y2="18" stroke="#aab" stroke-width="3" stroke-linecap="round"/>
+                <line x1="0" y1="-3" x2="10" y2="-12" stroke="#aab" stroke-width="3" stroke-linecap="round"/>
+                <line x1="0" y1="8" x2="10" y2="17" stroke="#aab" stroke-width="3" stroke-linecap="round"/>
+                <!-- cockpit -->
+                <ellipse cx="6" cy="1" rx="4" ry="2.5" fill="#4488ff" opacity="0.8"/>
+                <!-- engines -->
+                <circle cx="-9" cy="-14" r="2" fill="#ff8822" opacity="0.9"/>
+                <circle cx="-9" cy="18" r="2" fill="#ff8822" opacity="0.9"/>
+                <circle cx="10" cy="-12" r="1.5" fill="#ff8822" opacity="0.9"/>
+                <circle cx="10" cy="17" r="1.5" fill="#ff8822" opacity="0.9"/>
+                <!-- laser bolts -->
+                <rect x="12" y="-1" width="18" height="2" rx="1" fill="#ff4444" opacity="0.9"/>
+              </g>
+              <!-- X-Wing #2 (smaller/distant) -->
+              <g transform="translate(120,115) rotate(-10) scale(0.65)">
+                <rect x="-10" y="-3" width="22" height="5" rx="2" fill="#bbc"/>
+                <line x1="-4" y1="-3" x2="-14" y2="-14" stroke="#aab" stroke-width="3" stroke-linecap="round"/>
+                <line x1="-4" y1="8" x2="-14" y2="18" stroke="#aab" stroke-width="3" stroke-linecap="round"/>
+                <line x1="0" y1="-3" x2="10" y2="-12" stroke="#aab" stroke-width="3" stroke-linecap="round"/>
+                <line x1="0" y1="8" x2="10" y2="17" stroke="#aab" stroke-width="3" stroke-linecap="round"/>
+                <ellipse cx="6" cy="1" rx="4" ry="2.5" fill="#4488ff" opacity="0.7"/>
+                <circle cx="-9" cy="-14" r="2" fill="#ff8822" opacity="0.8"/>
+                <circle cx="-9" cy="18" r="2" fill="#ff8822" opacity="0.8"/>
+              </g>
+              <!-- TIE Fighter #1 -->
+              <g transform="translate(210,50) rotate(10)">
+                <!-- panels -->
+                <rect x="-20" y="-15" width="12" height="30" rx="2" fill="#334" stroke="#556" stroke-width="0.8"/>
+                <rect x="8" y="-15" width="12" height="30" rx="2" fill="#334" stroke="#556" stroke-width="0.8"/>
+                <!-- struts -->
+                <line x1="-8" y1="-5" x2="-8" y2="5" stroke="#445" stroke-width="1.5"/>
+                <line x1="8" y1="-5" x2="8" y2="5" stroke="#445" stroke-width="1.5"/>
+                <!-- cockpit ball -->
+                <circle cx="0" cy="0" r="7" fill="#223" stroke="#445" stroke-width="1"/>
+                <circle cx="0" cy="0" r="4" fill="#112" stroke="#334" stroke-width="0.5"/>
+                <!-- viewport -->
+                <ellipse cx="0" cy="0" rx="3" ry="2" fill="#446688" opacity="0.8"/>
+                <!-- laser bolt -->
+                <rect x="-30" y="-1" width="16" height="1.5" rx="0.5" fill="#ff4444" opacity="0.9"/>
+              </g>
+              <!-- TIE Fighter #2 (distant) -->
+              <g transform="translate(240,130) rotate(-5) scale(0.55)">
+                <rect x="-20" y="-15" width="12" height="30" rx="2" fill="#334" stroke="#556" stroke-width="0.8"/>
+                <rect x="8" y="-15" width="12" height="30" rx="2" fill="#334" stroke="#556" stroke-width="0.8"/>
+                <circle cx="0" cy="0" r="7" fill="#223" stroke="#445" stroke-width="1"/>
+                <ellipse cx="0" cy="0" rx="3" ry="2" fill="#446688" opacity="0.7"/>
+              </g>
+              <!-- TIE Fighter #3 (tiny/far) -->
+              <g transform="translate(185,140) scale(0.35)">
+                <rect x="-20" y="-15" width="12" height="30" rx="2" fill="#334"/>
+                <rect x="8" y="-15" width="12" height="30" rx="2" fill="#334"/>
+                <circle cx="0" cy="0" r="7" fill="#223"/>
+              </g>
+              <!-- explosion debris -->
+              <circle cx="195" cy="160" r="6" fill="#ff6600" opacity="0.7"/>
+              <circle cx="195" cy="160" r="10" fill="#ff4400" opacity="0.25"/>
+              <circle cx="195" cy="160" r="14" fill="#ffaa00" opacity="0.1"/>
+              <line x1="195" y1="160" x2="205" y2="150" stroke="#ffaa00" stroke-width="1.5" opacity="0.6"/>
+              <line x1="195" y1="160" x2="182" y2="152" stroke="#ff6600" stroke-width="1" opacity="0.5"/>
+              <line x1="195" y1="160" x2="200" y2="172" stroke="#ff8800" stroke-width="1" opacity="0.5"/>
+              <!-- label -->
+              <text x="8" y="194" font-family="monospace" font-size="8" fill="#00ccff" opacity="0.8" letter-spacing="2">SPACE BATTLE</text>
+            </g>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-tag">&#11041; First-Person &bull; Action &bull; FPS</div>
+          <div class="card-title">FPS Shooter</div>
+          <div class="card-desc">Pure first-person carnage. Lock on, open fire, and dominate the arena before the timer runs out.</div>
+          <div class="card-stats">
+            <div class="stat">
+              <div class="stat-label">Intensity</div>
+              <div class="stat-bar-bg"><div class="stat-bar" style="--w:80%"></div></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Speed</div>
+              <div class="stat-bar-bg"><div class="stat-bar" style="--w:85%"></div></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Skill</div>
+              <div class="stat-bar-bg"><div class="stat-bar" style="--w:90%"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="play-btn"><span>Play Now</span><div class="play-arrow">&#8594;</div></div>
+          <span class="card-badge">FPS</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Card 3 -->
+    <a class="game-card card-3" href="3d-shooter.html">
+      <div class="card-shine"></div>
+      <div class="card-inner">
+        <div class="card-corner cc-tl"></div>
+        <div class="card-corner cc-tr"></div>
+        <div class="card-corner cc-bl"></div>
+        <div class="card-corner cc-br"></div>
+        <!-- MUSTAFAR -->
+        <div class="card-thumb" style="background:none;padding:0;">
+          <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
+            <defs>
+              <linearGradient id="must-sky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0a0200"/>
+                <stop offset="40%" stop-color="#1a0400"/>
+                <stop offset="80%" stop-color="#4a0c00"/>
+                <stop offset="100%" stop-color="#8a2000"/>
+              </linearGradient>
+              <linearGradient id="lava-river" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ff8800"/>
+                <stop offset="50%" stop-color="#ff4400"/>
+                <stop offset="100%" stop-color="#cc2200"/>
+              </linearGradient>
+              <linearGradient id="lava-glow-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ff6600" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="#ff2200" stop-opacity="0"/>
+              </linearGradient>
+              <radialGradient id="volcano-glow" cx="50%" cy="100%" r="60%">
+                <stop offset="0%" stop-color="#ff4400" stop-opacity="0.5"/>
+                <stop offset="100%" stop-color="#ff0000" stop-opacity="0"/>
+              </radialGradient>
+              <filter id="lava-blur">
+                <feGaussianBlur stdDeviation="3"/>
+              </filter>
+              <filter id="saber-glow">
+                <feGaussianBlur stdDeviation="3" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <clipPath id="thumb-clip3"><rect width="400" height="200"/></clipPath>
+            </defs>
+            <g clip-path="url(#thumb-clip3)">
+              <!-- sky -->
+              <rect width="400" height="200" fill="url(#must-sky)"/>
+              <!-- ash clouds -->
+              <ellipse cx="80" cy="30" rx="90" ry="28" fill="#1a0800" opacity="0.7"/>
+              <ellipse cx="200" cy="20" rx="110" ry="22" fill="#150600" opacity="0.6"/>
+              <ellipse cx="330" cy="35" rx="95" ry="25" fill="#1a0800" opacity="0.65"/>
+              <ellipse cx="150" cy="45" rx="80" ry="18" fill="#120500" opacity="0.5"/>
+              <ellipse cx="270" cy="50" rx="70" ry="16" fill="#1a0800" opacity="0.5"/>
+              <!-- embers / sparks -->
+              <circle cx="50" cy="60" r="1.2" fill="#ff8800" opacity="0.8"/>
+              <circle cx="95" cy="45" r="0.8" fill="#ffaa00" opacity="0.7"/>
+              <circle cx="140" cy="70" r="1" fill="#ff6600" opacity="0.6"/>
+              <circle cx="200" cy="55" r="1.4" fill="#ff8800" opacity="0.9"/>
+              <circle cx="248" cy="68" r="0.9" fill="#ffcc00" opacity="0.7"/>
+              <circle cx="300" cy="48" r="1.1" fill="#ff8800" opacity="0.8"/>
+              <circle cx="340" cy="62" r="0.8" fill="#ff6600" opacity="0.6"/>
+              <circle cx="370" cy="42" r="1.3" fill="#ffaa00" opacity="0.7"/>
+              <circle cx="30"  cy="80" r="0.9" fill="#ff8800" opacity="0.5"/>
+              <circle cx="170" cy="82" r="0.7" fill="#ff6600" opacity="0.6"/>
+              <circle cx="390" cy="75" r="1"   fill="#ffbb00" opacity="0.6"/>
+              <!-- background volcanoes -->
+              <polygon points="0,145 30,80 60,145"   fill="#180500" opacity="0.9"/>
+              <polygon points="40,145 80,65 120,145"  fill="#1a0600" opacity="0.85"/>
+              <polygon points="280,145 320,70 360,145" fill="#1a0600" opacity="0.85"/>
+              <polygon points="340,145 375,82 410,145" fill="#180500" opacity="0.9"/>
+              <!-- volcano glow tops -->
+              <ellipse cx="80"  cy="65" rx="22" ry="8" fill="#ff4400" opacity="0.25" filter="url(#lava-blur)"/>
+              <ellipse cx="320" cy="70" rx="22" ry="8" fill="#ff4400" opacity="0.25" filter="url(#lava-blur)"/>
+              <!-- lava glow from below -->
+              <rect x="0" y="120" width="400" height="80" fill="url(#lava-glow-grad)"/>
+              <!-- dark rock platform left -->
+              <polygon points="0,155 0,200 110,200 130,155 80,148 40,152" fill="#1a0800"/>
+              <polygon points="0,155 80,148 40,152" fill="#0a0300"/>
+              <!-- dark rock platform right -->
+              <polygon points="270,155 290,148 360,152 400,155 400,200 270,200" fill="#1a0800"/>
+              <!-- main lava river -->
+              <path d="M0,165 Q60,150 130,158 Q200,168 270,158 Q330,150 400,162 L400,200 L0,200 Z" fill="url(#lava-river)"/>
+              <!-- lava surface shimmer lines -->
+              <path d="M20,170 Q80,162 140,168" fill="none" stroke="#ffcc44" stroke-width="1" opacity="0.4"/>
+              <path d="M60,178 Q130,170 200,176" fill="none" stroke="#ffaa22" stroke-width="0.8" opacity="0.3"/>
+              <path d="M200,174 Q270,166 340,172" fill="none" stroke="#ffcc44" stroke-width="1" opacity="0.4"/>
+              <path d="M260,182 Q320,174 390,180" fill="none" stroke="#ffaa22" stroke-width="0.8" opacity="0.3"/>
+              <!-- lava bubbles -->
+              <circle cx="100" cy="172" r="5" fill="#ff6600" opacity="0.6"/>
+              <circle cx="100" cy="172" r="8" fill="#ff4400" opacity="0.15"/>
+              <circle cx="230" cy="180" r="4" fill="#ff7700" opacity="0.5"/>
+              <circle cx="310" cy="170" r="6" fill="#ff5500" opacity="0.55"/>
+              <!-- rock pillars in lava -->
+              <rect x="155" y="140" width="18" height="32" rx="2" fill="#150500"/>
+              <rect x="220" y="135" width="14" height="37" rx="2" fill="#120400"/>
+              <!-- narrow bridge between platforms -->
+              <rect x="125" y="152" width="150" height="8" rx="3" fill="#1f0800"/>
+              <rect x="125" y="152" width="150" height="2" rx="1" fill="#2a0c00" opacity="0.6"/>
+              <!-- Obi-Wan silhouette (high ground) -->
+              <g transform="translate(118,128)">
+                <!-- body -->
+                <rect x="-4" y="-20" width="8" height="22" rx="2" fill="#0a0300"/>
+                <!-- head -->
+                <circle cx="0" cy="-24" r="5" fill="#0a0300"/>
+                <!-- robe flow -->
+                <path d="M-4,2 Q-10,10 -8,20 L8,20 Q10,10 4,2 Z" fill="#0a0300"/>
+                <!-- saber arm raised -->
+                <line x1="4" y1="-14" x2="24" y2="-38" stroke="#0a0300" stroke-width="3" stroke-linecap="round"/>
+                <!-- BLUE lightsaber -->
+                <line x1="10" y1="-20" x2="34" y2="-48" stroke="#00aaff" stroke-width="4" stroke-linecap="round" filter="url(#saber-glow)" opacity="0.95"/>
+                <line x1="10" y1="-20" x2="34" y2="-48" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+              </g>
+              <!-- Anakin silhouette (lower ground) -->
+              <g transform="translate(175,138)">
+                <rect x="-4" y="-18" width="8" height="20" rx="2" fill="#0a0300"/>
+                <circle cx="0" cy="-22" r="5" fill="#0a0300"/>
+                <path d="M-4,2 Q-9,8 -7,18 L7,18 Q9,8 4,2 Z" fill="#0a0300"/>
+                <!-- saber arm -->
+                <line x1="-4" y1="-12" x2="-22" y2="-34" stroke="#0a0300" stroke-width="3" stroke-linecap="round"/>
+                <!-- RED lightsaber -->
+                <line x1="-10" y1="-18" x2="-32" y2="-44" stroke="#ff1111" stroke-width="4" stroke-linecap="round" filter="url(#saber-glow)" opacity="0.95"/>
+                <line x1="-10" y1="-18" x2="-32" y2="-44" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+              </g>
+              <!-- saber clash glow -->
+              <circle cx="148" cy="110" r="14" fill="#ffffff" opacity="0.08" filter="url(#lava-blur)"/>
+              <circle cx="148" cy="110" r="7"  fill="#ffffff" opacity="0.12"/>
+              <!-- lava spray particles -->
+              <circle cx="180" cy="162" r="2" fill="#ffaa00" opacity="0.8"/>
+              <circle cx="165" cy="155" r="1.5" fill="#ff8800" opacity="0.7"/>
+              <circle cx="195" cy="158" r="1.8" fill="#ffcc00" opacity="0.6"/>
+              <!-- label -->
+              <text x="8" y="194" font-family="monospace" font-size="8" fill="#ff6622" opacity="0.8" letter-spacing="2">MUSTAFAR</text>
+            </g>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-tag">&#11041; 3D &bull; Explosive &bull; Action</div>
+          <div class="card-title">3D Shooter</div>
+          <div class="card-desc">High-octane 3D combat with explosions and total chaos. Move fast or get wrecked.</div>
+          <div class="card-stats">
+            <div class="stat">
+              <div class="stat-label">Intensity</div>
+              <div class="stat-bar-bg"><div class="stat-bar" style="--w:95%"></div></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Speed</div>
+              <div class="stat-bar-bg"><div class="stat-bar" style="--w:90%"></div></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Boom</div>
+              <div class="stat-bar-bg"><div class="stat-bar" style="--w:100%"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="play-btn"><span>Play Now</span><div class="play-arrow">&#8594;</div></div>
+          <span class="card-badge">3D</span>
+        </div>
+      </div>
+    </a>
+
+  </main>
+
+  <div class="vr-banner">
+    <div class="vr-box">
+      <div class="vr-icon">&#129501;</div>
+      <div class="vr-text">
+        <h3>&#9632; VR MODE INCOMING</h3>
+        <p>VR support is being built. For now, run any game in your browser's fullscreen immersive mode for maximum immersion.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-top">
+
+      <!-- Brand + credit -->
+      <div class="footer-col">
+        <div class="footer-brand">ARCADE VAULT</div>
+        <p class="footer-tagline">A personal game portal built from scratch. No engines. No shortcuts. Pure code.</p>
+        <div class="footer-credit">
+          <div class="credit-avatar">EF</div>
+          <div class="credit-info">
+            <div class="credit-name">Ethan Finto</div>
+            <div class="credit-nick">MasterE204</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Games -->
+      <div class="footer-col">
+        <h4>Games</h4>
+        <a href="index.html">Nuclear Throne 3D</a>
+        <a href="fps-shooter.html">FPS Shooter</a>
+        <a href="3d-shooter.html">3D Shooter</a>
+      </div>
+
+      <!-- About -->
+      <div class="footer-col">
+        <h4>About</h4>
+        <p>Builder &mdash; Ethan Finto</p>
+        <p>Alias &mdash; MasterE204</p>
+        <p>Domain &mdash; ethantiq.com</p>
+        <p>Stack &mdash; HTML / CSS / JS</p>
+        <p>Year &mdash; 2026</p>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <span class="footer-copy">&copy; 2026 Ethan Finto &mdash; All rights reserved</span>
+      <span class="footer-domain">ethantiq.com</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// CUSTOM CURSOR
+// ─────────────────────────────────────────
+const cursor = document.getElementById('cursor');
+const ring   = document.getElementById('cursor-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top  = my + 'px';
+});
+
+// ring lags behind
+(function animRing() {
+  rx += (mx - rx) * 0.14;
+  ry += (my - ry) * 0.14;
+  ring.style.left = rx + 'px';
+  ring.style.top  = ry + 'px';
+  requestAnimationFrame(animRing);
+})();
+
+document.querySelectorAll('a').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.width = '20px';
+    cursor.style.height = '20px';
+    cursor.style.background = 'var(--red)';
+    cursor.style.boxShadow = '0 0 20px var(--red), 0 0 50px var(--red)';
+    ring.style.width = '56px';
+    ring.style.height = '56px';
+    ring.style.borderColor = 'var(--red)';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.width = '12px';
+    cursor.style.height = '12px';
+    cursor.style.background = 'var(--blue)';
+    cursor.style.boxShadow = '0 0 12px var(--blue), 0 0 30px var(--blue)';
+    ring.style.width = '36px';
+    ring.style.height = '36px';
+    ring.style.borderColor = 'var(--blue)';
+  });
+});
+
+// ─────────────────────────────────────────
+// BG CANVAS — stars + nebula + shooting stars
+// ─────────────────────────────────────────
+const bgC = document.getElementById('bg-canvas');
+const bgX = bgC.getContext('2d');
+function resizeBg() { bgC.width = innerWidth; bgC.height = innerHeight; }
+resizeBg(); window.addEventListener('resize', resizeBg);
+
+// stars
+const STARS = Array.from({length: 220}, () => ({
+  x: Math.random() * innerWidth,
+  y: Math.random() * innerHeight,
+  r: Math.random() * 1.4 + 0.2,
+  a: Math.random(),
+  da: (Math.random() - 0.5) * 0.008,
+}));
+
+// nebula blobs
+const NEBULAE = [
+  { x:0.2, y:0.3, r:320, color:'rgba(191,0,255,0.04)' },
+  { x:0.8, y:0.6, r:280, color:'rgba(0,240,255,0.04)' },
+  { x:0.5, y:0.8, r:260, color:'rgba(255,34,68,0.03)' },
+];
+
+// shooting stars
+const SHOOTS = [];
+function spawnShoot() {
+  SHOOTS.push({
+    x: Math.random() * innerWidth,
+    y: Math.random() * innerHeight * 0.5,
+    len: 100 + Math.random() * 150,
+    speed: 8 + Math.random() * 8,
+    angle: Math.PI / 5 + Math.random() * 0.3,
+    life: 1,
+  });
+}
+setInterval(spawnShoot, 2200);
+
+function drawBg() {
+  bgX.clearRect(0, 0, bgC.width, bgC.height);
+
+  // nebulae
+  for (const n of NEBULAE) {
+    const g = bgX.createRadialGradient(n.x*bgC.width, n.y*bgC.height, 0, n.x*bgC.width, n.y*bgC.height, n.r);
+    g.addColorStop(0, n.color);
+    g.addColorStop(1, 'transparent');
+    bgX.fillStyle = g;
+    bgX.beginPath();
+    bgX.arc(n.x*bgC.width, n.y*bgC.height, n.r, 0, Math.PI*2);
+    bgX.fill();
+  }
+
+  // stars
+  for (const s of STARS) {
+    s.a += s.da;
+    if (s.a <= 0 || s.a >= 1) s.da *= -1;
+    bgX.beginPath();
+    bgX.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    bgX.fillStyle = `rgba(200,210,255,${s.a})`;
+    bgX.fill();
+  }
+
+  // shooting stars
+  for (let i = SHOOTS.length - 1; i >= 0; i--) {
+    const s = SHOOTS[i];
+    s.x += Math.cos(s.angle) * s.speed;
+    s.y += Math.sin(s.angle) * s.speed;
+    s.life -= 0.018;
+    if (s.life <= 0 || s.x > bgC.width || s.y > bgC.height) { SHOOTS.splice(i,1); continue; }
+    const grd = bgX.createLinearGradient(s.x, s.y, s.x - Math.cos(s.angle)*s.len, s.y - Math.sin(s.angle)*s.len);
+    grd.addColorStop(0, `rgba(255,255,255,${s.life * 0.9})`);
+    grd.addColorStop(1, 'transparent');
+    bgX.strokeStyle = grd;
+    bgX.lineWidth = 1.5;
+    bgX.beginPath();
+    bgX.moveTo(s.x, s.y);
+    bgX.lineTo(s.x - Math.cos(s.angle)*s.len, s.y - Math.sin(s.angle)*s.len);
+    bgX.stroke();
+  }
+
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+// ─────────────────────────────────────────
+// VFX CANVAS — particles + cursor trail + grid floor
+// ─────────────────────────────────────────
+const vfxC = document.getElementById('vfx-canvas');
+const vfxX = vfxC.getContext('2d');
+function resizeVfx() { vfxC.width = innerWidth; vfxC.height = innerHeight; }
+resizeVfx(); window.addEventListener('resize', resizeVfx);
+
+// floating particles
+const COLORS = ['#ff2244','#00f0ff','#bf00ff','#ffee00','#00ff88'];
+const PARTS = Array.from({length: 70}, () => ({
+  x: Math.random() * innerWidth,
+  y: Math.random() * innerHeight,
+  vx: (Math.random()-0.5)*0.5,
+  vy: (Math.random()-0.5)*0.5,
+  r: Math.random()*1.6+0.3,
+  c: COLORS[Math.floor(Math.random()*COLORS.length)],
+  a: Math.random()*0.5+0.1,
+}));
+
+// cursor trail
+const TRAIL = [];
+document.addEventListener('mousemove', e => {
+  TRAIL.push({ x: e.clientX, y: e.clientY, life: 1 });
+  if (TRAIL.length > 30) TRAIL.shift();
+});
+
+// click bursts
+const BURSTS = [];
+document.addEventListener('click', e => {
+  for (let i = 0; i < 18; i++) {
+    const angle = (Math.PI * 2 / 18) * i;
+    BURSTS.push({
+      x: e.clientX, y: e.clientY,
+      vx: Math.cos(angle) * (2 + Math.random()*4),
+      vy: Math.sin(angle) * (2 + Math.random()*4),
+      r: Math.random()*3+1,
+      c: COLORS[Math.floor(Math.random()*COLORS.length)],
+      life: 1,
+    });
+  }
+});
+
+function drawVfx() {
+  vfxX.clearRect(0, 0, vfxC.width, vfxC.height);
+
+  // grid floor
+  const floorY = vfxC.height * 0.68;
+  vfxX.save();
+  vfxX.beginPath();
+  vfxX.rect(0, floorY, vfxC.width, vfxC.height - floorY);
+  vfxX.clip();
+
+  vfxX.setTransform(1, 0, 0, 1, 0, 0);
+  const vp = { x: vfxC.width/2, y: floorY };
+  const GRID = 10;
+  for (let i = -GRID; i <= GRID; i++) {
+    const t = (i + GRID) / (GRID * 2);
+    const alpha = 0.06 - Math.abs(i/GRID)*0.055;
+    // horizontal lines
+    for (let j = 0; j <= 12; j++) {
+      const yf = j / 12;
+      const yp = floorY + (vfxC.height - floorY) * yf;
+      const spread = 3000 * yf;
+      vfxX.strokeStyle = `rgba(0,240,255,${0.07 * (1 - yf * 0.8)})`;
+      vfxX.lineWidth = 0.5;
+      vfxX.beginPath();
+      vfxX.moveTo(vp.x - spread, yp);
+      vfxX.lineTo(vp.x + spread, yp);
+      vfxX.stroke();
+    }
+    const x0 = vp.x + (i / GRID) * 400;
+    vfxX.strokeStyle = `rgba(0,240,255,${alpha})`;
+    vfxX.lineWidth = 0.5;
+    vfxX.beginPath();
+    vfxX.moveTo(x0, floorY);
+    vfxX.lineTo(vp.x + (i / GRID) * 3000, vfxC.height);
+    vfxX.stroke();
+  }
+  vfxX.restore();
+
+  // floating particles + connection lines
+  for (const p of PARTS) {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = vfxC.width;
+    if (p.x > vfxC.width) p.x = 0;
+    if (p.y < 0) p.y = vfxC.height;
+    if (p.y > vfxC.height) p.y = 0;
+    vfxX.beginPath();
+    vfxX.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    vfxX.fillStyle = p.c + Math.round(p.a*255).toString(16).padStart(2,'0');
+    vfxX.fill();
+  }
+  for (let i = 0; i < PARTS.length; i++) {
+    for (let j = i+1; j < PARTS.length; j++) {
+      const dx = PARTS[i].x - PARTS[j].x, dy = PARTS[i].y - PARTS[j].y;
+      const d = Math.sqrt(dx*dx+dy*dy);
+      if (d < 120) {
+        vfxX.beginPath();
+        vfxX.moveTo(PARTS[i].x, PARTS[i].y);
+        vfxX.lineTo(PARTS[j].x, PARTS[j].y);
+        vfxX.strokeStyle = `rgba(0,240,255,${0.07*(1-d/120)})`;
+        vfxX.lineWidth = 0.5;
+        vfxX.stroke();
+      }
+    }
+  }
+
+  // cursor trail
+  for (let i = 0; i < TRAIL.length; i++) {
+    const t = TRAIL[i];
+    t.life -= 0.04;
+    const progress = i / TRAIL.length;
+    vfxX.beginPath();
+    vfxX.arc(t.x, t.y, progress * 4, 0, Math.PI*2);
+    vfxX.fillStyle = `rgba(0,240,255,${t.life * progress * 0.6})`;
+    vfxX.fill();
+  }
+
+  // click bursts
+  for (let i = BURSTS.length-1; i >= 0; i--) {
+    const b = BURSTS[i];
+    b.x += b.vx; b.y += b.vy; b.life -= 0.03; b.vx *= 0.96; b.vy *= 0.96;
+    if (b.life <= 0) { BURSTS.splice(i,1); continue; }
+    vfxX.beginPath();
+    vfxX.arc(b.x, b.y, b.r, 0, Math.PI*2);
+    vfxX.fillStyle = b.c + Math.round(b.life*255).toString(16).padStart(2,'0');
+    vfxX.fill();
+  }
+
+  requestAnimationFrame(drawVfx);
+}
+drawVfx();
+
+// ─────────────────────────────────────────
+// CARD 3D TILT + SHINE
+// ─────────────────────────────────────────
+document.querySelectorAll('.game-card').forEach(card => {
+  const shine = card.querySelector('.card-shine');
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const dx = (e.clientX - r.left) / r.width  - 0.5;
+    const dy = (e.clientY - r.top)  / r.height - 0.5;
+    card.style.transform = `translateY(-14px) rotateX(${-dy*12}deg) rotateY(${dx*12}deg)`;
+    if (shine) {
+      const px = ((e.clientX - r.left) / r.width  * 100).toFixed(1);
+      const py = ((e.clientY - r.top)  / r.height * 100).toFixed(1);
+      shine.style.setProperty('--mx', px + '%');
+      shine.style.setProperty('--my', py + '%');
+    }
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+  });
+});
+</script>
+</body>
+</html>
