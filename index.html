@@ -2377,10 +2377,15 @@ function animate() {
     shakeAmt = Math.max(0, shakeAmt-0.2);
   }
 
-  // iframe flash — white flicker on Luke
+  // iframe hit pulse — red emissive fade, no color wipe
   if (iframes>0) {
     iframes--;
-    setLukeColor(iframes%8<4 ? 0xffffff : 0xd8d0b8);
+    const t = iframes / 45;
+    // Sharp initial spike then smooth fade; brief flicker in first 10 frames
+    const flicker = iframes > 35 ? (iframes % 4 < 2 ? 1.0 : 0.4) : t;
+    setLukeHitFlash(flicker);
+  } else {
+    setLukeHitFlash(0);
   }
 
   // ── Shoot timer
