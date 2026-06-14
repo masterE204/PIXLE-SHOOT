@@ -906,10 +906,9 @@ function executeMove(fr, fc, tr, tc, promo) {
   const piece = board[fr][fc];
   const willCapture = board[tr][tc] || (piece.t==='p'&&fc!==tc&&!board[tr][tc]);
 
+  animating = true;
   if (willCapture) {
-    // Dramatic capture sequence: faint the victim first, then move
     const victimCell = getCellEl(tr, tc);
-    const attackerCell = getCellEl(fr, fc);
     soundAttack();
     screenFlash('#ff000044');
     pokeFaint(victimCell, () => {
@@ -920,8 +919,12 @@ function executeMove(fr, fc, tr, tc, promo) {
         burstParticles(tr, tc, capturedPiece.c==='w'?'#ffffff':'#a855f7');
         spawnDamageText(tr, tc, '-' + PIECE_VALUE[capturedPiece.t]);
       }
-      logAndFinish(fr, fc, tr, tc, promo, capturedPiece);
-      soundLand();
+      soundJump();
+      animatePieceJump(fr, fc, tr, tc, () => {
+        logAndFinish(fr, fc, tr, tc, promo, capturedPiece);
+        soundLand();
+        animating = false;
+      });
     });
   } else {
     soundJump();
@@ -929,6 +932,7 @@ function executeMove(fr, fc, tr, tc, promo) {
     animatePieceJump(fr, fc, tr, tc, () => {
       logAndFinish(fr, fc, tr, tc, promo, capturedPiece);
       soundLand();
+      animating = false;
     });
   }
 }
