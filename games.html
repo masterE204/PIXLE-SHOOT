@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MasterE204 — Game Hub</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: #050010;
+    background-image:
+      radial-gradient(ellipse at 15% 40%, #12003a 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 20%, #001230 0%, transparent 50%),
+      radial-gradient(ellipse at 55% 85%, #1a0020 0%, transparent 50%);
+    min-height: 100vh;
+    font-family: 'Rajdhani', sans-serif;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  /* ── Stars ── */
+  #stars { position:fixed; inset:0; pointer-events:none; z-index:0; }
+  .star {
+    position:absolute;
+    border-radius:50%;
+    background:#fff;
+    animation: twinkle linear infinite;
+    opacity:0;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity:0; transform:scale(0.5); }
+    50%      { opacity:1; transform:scale(1.2); }
+  }
+
+  /* ── Header ── */
+  header {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 60px 20px 30px;
+  }
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #a855f7, #ec4899, #f59e0b, #a855f7);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradShift 5s ease infinite;
+    margin-bottom: 8px;
+  }
+  @keyframes gradShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .logo-line {
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #a855f7, #ec4899, #f59e0b, transparent);
+    border-radius: 2px;
+    margin: 10px auto;
+    width: min(500px, 80vw);
+  }
+  .tagline {
+    font-size: clamp(0.8rem, 1.8vw, 1rem);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: #a78bfa;
+    margin-top: 6px;
+  }
+
+  /* ── Grid ── */
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 28px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 24px 80px;
+    position: relative; z-index:1;
+  }
+
+  /* ── Card ── */
+  .game-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: linear-gradient(160deg, rgba(30,10,60,0.95), rgba(10,0,30,0.98));
+    border: 1px solid rgba(168,85,247,0.25);
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  .game-card:hover {
+    transform: translateY(-8px) scale(1.015);
+    border-color: rgba(168,85,247,0.7);
+    box-shadow:
+      0 20px 60px rgba(168,85,247,0.25),
+      0 0 0 1px rgba(168,85,247,0.3);
+  }
+  /* Accent top bar — colour set per card */
+  .game-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent, linear-gradient(90deg,#a855f7,#ec4899));
+    z-index: 2;
+  }
+  /* Hover glow overlay */
+  .game-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.12), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .game-card:hover::after { opacity: 1; }
+
+  /* Thumbnail */
+  .thumb {
+    width: 100%;
+    aspect-ratio: 16/9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    position: relative;
+    overflow: hidden;
+    background: var(--thumb-bg, #0a0020);
+  }
+  .thumb-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 100%, var(--glow, rgba(168,85,247,0.3)), transparent 70%);
+  }
+  .thumb-icon { position: relative; z-index:1; filter: drop-shadow(0 0 20px var(--icon-glow, #a855f7)); animation: iconFloat 3s ease-in-out infinite; }
+  @keyframes iconFloat {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+
+  /* NEW badge */
+  .badge-new {
+    position: absolute;
+    top: 14px; right: 14px;
+    background: linear-gradient(135deg, #f59e0b, #ec4899);
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    box-shadow: 0 0 12px rgba(245,158,11,0.5);
+    z-index: 3;
+    animation: badgePulse 1.5s ease-in-out infinite;
+  }
+  @keyframes badgePulse {
+    0%,100% { box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+    50%      { box-shadow: 0 0 20px rgba(245,158,11,0.8); }
+  }
+
+  /* Card body */
+  .card-body { padding: 20px 22px 24px; }
+  .card-genre {
+    font-size: 0.65rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent-color, #a855f7);
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .card-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1rem, 2.2vw, 1.25rem);
+    font-weight: 700;
+    color: #f0f0ff;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .card-desc {
+    font-size: 0.88rem;
+    color: #9ca3af;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  /* Tags */
+  .card-tags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .tag {
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 20px;
+    border: 1px solid rgba(168,85,247,0.3);
+    color: #a78bfa;
+    background: rgba(168,85,247,0.08);
+  }
+
+  /* Play button */
+  .play-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--btn-a, #7c3aed), var(--btn-b, #a855f7));
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(168,85,247,0.3);
+  }
+  .play-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(168,85,247,0.5);
+  }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 30px;
+    color: rgba(168,85,247,0.4);
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    position: relative; z-index:1;
+    border-top: 1px solid rgba(168,85,247,0.1);
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: rgba(168,85,247,0.5);
+    margin: 10px 0 4px;
+    position: relative; z-index:1;
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<header>
+  <div class="logo">⚔️ MASTER GAMES ⚔️</div>
+  <div class="logo-line"></div>
+  <div class="tagline">Play • Compete • Level Up</div>
+</header>
+
+<p class="section-label">— Choose Your Battle —</p>
+
+<div class="games-grid">
+
+  <!-- Anime Chess -->
+  <a class="game-card" href="chess-anime.html"
+     style="--accent: linear-gradient(90deg,#a855f7,#ec4899);
+            --accent-color:#a855f7; --btn-a:#7c3aed; --btn-b:#a855f7;
+            --thumb-bg:#0a0020; --glow:rgba(168,85,247,0.35); --icon-glow:#a855f7">
+    <div class="thumb">
+      <div class="thumb-glow"></div>
+      <span class="thumb-icon">♟️</span>
+    </div>
+    <div class="badge-new">NEW</div>
+    <div class="card-body">
+      <div class="card-genre">Strategy • Anime</div>
+      <div class="card-title">Anime Chess ⚔️</div>
+      <div class="card-desc">
+        Battle of Legends — fully featured chess with Pokémon-style piece animations,
+        dramatic capture effects, force field overlays, 3D board mode, and a
+        Three.js VR hologram scene.
+      </div>
+      <div class="card-tags">
+        <span class="tag">2 Player</span>
+        <span class="tag">3D Mode</span>
+        <span class="tag">VR Mode</span>
+        <span class="tag">Force Fields</span>
+        <span class="tag">Sound FX</span>
+      </div>
+      <button class="play-btn">▶ Play Now</button>
+    </div>
+  </a>
+
+  <!-- Star Wars Shooter -->
+  <a class="game-card" href="index.html"
+     style="--accent: linear-gradient(90deg,#0044cc,#00aaff);
+            --accent-color:#00aaff; --btn-a:#003399; --btn-b:#0066cc;
+            --thumb-bg:#050915; --glow:rgba(0,100,255,0.3); --icon-glow:#0088ff">
+    <div class="thumb">
+      <div class="thumb-glow"></div>
+      <span class="thumb-icon">🚀</span>
+    </div>
+    <div class="card-body">
+      <div class="card-genre">Action • Shooter</div>
+      <div class="card-title">Star Wars: Last Stand</div>
+      <div class="card-desc">
+        Survive 20 waves of Imperial forces across iconic Star Wars locations.
+        Level up, unlock weapons and Force powers, fight bosses with a full
+        3D arena rendered in Three.js.
+      </div>
+      <div class="card-tags">
+        <span class="tag">3D</span>
+        <span class="tag">Waves</span>
+        <span class="tag">Upgrades</span>
+        <span class="tag">Boss Fights</span>
+      </div>
+      <button class="play-btn" style="background:linear-gradient(135deg,#003399,#0066cc)">▶ Play Now</button>
+    </div>
+  </a>
+
+  <!-- 3D Shooter -->
+  <a class="game-card" href="3d-shooter.html"
+     style="--accent: linear-gradient(90deg,#dc2626,#f97316);
+            --accent-color:#f97316; --btn-a:#b91c1c; --btn-b:#dc2626;
+            --thumb-bg:#120500; --glow:rgba(255,80,0,0.3); --icon-glow:#ff4400">
+    <div class="thumb">
+      <div class="thumb-glow"></div>
+      <span class="thumb-icon">🔫</span>
+    </div>
+    <div class="card-body">
+      <div class="card-genre">Action • FPS</div>
+      <div class="card-title">3D Shooter</div>
+      <div class="card-desc">
+        First-person arena shooter. Move fast, aim true, and take down
+        waves of enemies in a fully 3D WebGL environment.
+      </div>
+      <div class="card-tags">
+        <span class="tag">FPS</span>
+        <span class="tag">3D</span>
+        <span class="tag">Arcade</span>
+      </div>
+      <button class="play-btn" style="background:linear-gradient(135deg,#b91c1c,#dc2626)">▶ Play Now</button>
+    </div>
+  </a>
+
+  <!-- Portal -->
+  <a class="game-card" href="portal.html"
+     style="--accent: linear-gradient(90deg,#0891b2,#06b6d4);
+            --accent-color:#06b6d4; --btn-a:#0e7490; --btn-b:#0891b2;
+            --thumb-bg:#000e18; --glow:rgba(0,180,220,0.3); --icon-glow:#00d4ff">
+    <div class="thumb">
+      <div class="thumb-glow"></div>
+      <span class="thumb-icon">🌀</span>
+    </div>
+    <div class="card-body">
+      <div class="card-genre">Puzzle • Physics</div>
+      <div class="card-title">Portal</div>
+      <div class="card-desc">
+        Think with portals. Navigate mind-bending levels using linked
+        dimensional gateways in this browser-based physics puzzler.
+      </div>
+      <div class="card-tags">
+        <span class="tag">Puzzle</span>
+        <span class="tag">Physics</span>
+        <span class="tag">Portal Gun</span>
+      </div>
+      <button class="play-btn" style="background:linear-gradient(135deg,#0e7490,#0891b2)">▶ Play Now</button>
+    </div>
+  </a>
+
+</div>
+
+<footer>
+  masterE204 · games hub · built with ⚡ by claude
+</footer>
+
+<script>
+// Starfield
+const container = document.getElementById('stars');
+for (let i = 0; i < 180; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const size = 1 + Math.random() * 2.5;
+  s.style.cssText = `
+    left:${Math.random()*100}%;
+    top:${Math.random()*100}%;
+    width:${size}px; height:${size}px;
+    animation-duration:${2+Math.random()*5}s;
+    animation-delay:${Math.random()*6}s;
+  `;
+  container.appendChild(s);
+}
+</script>
+</body>
+</html>
